@@ -1,51 +1,35 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Search } from "lucide-react";
+import {
+  BookOpen,
+  Menu,
+  Search,
+  User,
+  Globe,
+  PenTool
+} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 const Header = () => {
+  const location = useLocation();
+
   return (
-    <header className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Left side - Tagline */}
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+    <header className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border/50 z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo and Tagline */}
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-soft">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 OFW Pathfinder
               </h1>
-              <p className="text-sm text-muted-foreground font-medium">
-                ito ang kwento nyo
-              </p>
+              <p className="text-xs text-muted-foreground hidden sm:block">ito ang kwento nyo</p>
             </div>
-          </div>
-
-          {/* Center - Navigation (hidden on mobile) */}
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Mga Kwento
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Trabaho
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Tulong
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Komunidad
-            </a>
-          </nav>
-
-          {/* Right side - Search and CTA (no title) */}
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
-            </Button>
-            <Button variant="hero" size="sm" className="hidden sm:flex">
-              Magbahagi ng Kwento
-            </Button>
-          </div>
+          </Link>
+          
+          {/* Navigation removed from top right as requested */}
         </div>
       </div>
     </header>

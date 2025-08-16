@@ -1,16 +1,18 @@
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
-import SpotifySection from "@/components/SpotifySection";
-import Footer from "@/components/Footer";
+import Hero from "@/components/Hero";
+import SpotifyEpisodes from "@/components/SpotifyEpisodes";
+import ContactForm from "@/components/ContactForm";
 
 const Index = () => {
   return (
-        <div className="min-h-screen">
-          <Header />
-          <HeroSection />
-          <SpotifySection />
-          <Footer />
-        </div>
+    <div className="min-h-screen">
+      <Header />
+      <main>
+        <Hero />
+        <SpotifyEpisodes />
+        <ContactForm />
+      </main>
+    </div>
   );
 };
 
