@@ -129,7 +129,7 @@ const MediaSection = () => {
                     </div>
 
                     <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                      {episode.title}
+                      HOW TO APPLY AN EMPLOYEE CARD
                     </h3>
 
                     <p className="text-muted-foreground leading-relaxed text-sm">
