@@ -4,7 +4,7 @@ import heroImage from "@/assets/ofw-hero.jpg";
 
 const Hero = () => {
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-[140vh] overflow-hidden">
       {/* Full Screen Hero Image */}
       <div className="absolute inset-0">
         <img
@@ -60,6 +60,41 @@ const Hero = () => {
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-primary-foreground/50 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-primary-foreground/50 rounded-full mt-2 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Who We Are Section - Below Scroll */}
+        <div className="absolute bottom-[-120px] left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/50">
+          <div className="container mx-auto px-4 py-16">
+            <div className="max-w-4xl mx-auto text-center space-y-6">
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Diary of an OFW is dedicated to capturing the raw, unfiltered journeys of Overseas Filipino Workers across the globe. We shine a light on the extraordinary achievements and untold stories of Filipinos who have carved out greatness far from home.
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Through intimate conversations with notable individuals—especially those thriving in foreign lands—we uncover hidden truths, life-changing lessons, and meaningful insights.
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                Our mission is to inspire, uplift, and empower our audience to live with greater joy, purpose, and fulfillment by sharing the voices and victories of the global Filipino community.
+              </p>
+              
+              {/* Latest Episodes Links */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+                <Button
+                  size="lg"
+                  className="text-lg px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105"
+                  onClick={() => window.open('https://youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')}
+                >
+                  Watch Our Latest Episodes in YT
+                </Button>
+                <Button
+                  size="lg"
+                  className="text-lg px-8 py-6 rounded-full bg-green-500 hover:bg-green-600 text-white transition-all duration-300 hover:scale-105"
+                  onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')}
+                >
+                  Listen to Our Latest Episodes
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
