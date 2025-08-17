@@ -126,10 +126,10 @@ const ContactForm = () => {
                       <SelectValue placeholder="Select a service" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="interviews">Interviews</SelectItem>
-                      <SelectItem value="website-development">Website Development</SelectItem>
+                      <SelectItem value="web-development">Web Development</SelectItem>
                       <SelectItem value="mobile-development">Mobile Development</SelectItem>
                       <SelectItem value="admin-tasks">Admin Tasks</SelectItem>
+                      <SelectItem value="interviews">Interviews</SelectItem>
                       <SelectItem value="advertising">Advertising</SelectItem>
                     </SelectContent>
                   </Select>

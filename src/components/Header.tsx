@@ -23,7 +23,7 @@ const Header = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                OFW Pathfinder
+                DIARY OF AN OFW
               </h1>
               <p className="text-xs text-muted-foreground hidden sm:block">ito ang kwento nyo</p>
             </div>

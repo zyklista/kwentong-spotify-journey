@@ -1,7 +1,8 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import SpotifyEpisodes from "@/components/SpotifyEpisodes";
+import MediaSection from "@/components/MediaSection";
 import ContactForm from "@/components/ContactForm";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -9,9 +10,10 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
-        <SpotifyEpisodes />
+        <MediaSection />
         <ContactForm />
       </main>
+      <Footer />
     </div>
   );
 };
