@@ -52,9 +52,7 @@ const ContactForm = () => {
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
             How Can We Help You?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            We offer various services to support your journey. Tell us what you need and we'll get back to you.
-          </p>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">We offer various services to support your journey. But just like the doctor, we want to know if we fits your needs. Send us how can we help you and we'll get in touch with you within 72hrs.</p>
         </div>
 
         <div className="max-w-4xl mx-auto">
