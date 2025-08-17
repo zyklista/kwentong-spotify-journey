@@ -39,18 +39,18 @@ const Hero = () => {
                 size="lg"
                 variant="secondary"
                 className="text-lg px-8 py-6 rounded-full shadow-medium hover:shadow-strong transition-all duration-300 hover:scale-105"
-                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => window.open('https://youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')}
               >
                 Watch Our Latest Episode
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button
                 size="lg"
-                className="text-lg px-8 py-6 rounded-full bg-yellow-500 text-black hover:bg-yellow-600 hover:scale-105 transition-all duration-300"
-                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-lg px-8 py-6 rounded-full bg-green-500 text-white hover:bg-green-600 hover:scale-105 transition-all duration-300"
+                onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')}
               >
                 <Users className="mr-2 w-5 h-5" />
-                Share Your Story
+                Listen to Our New Episode
               </Button>
             </div>
           </div>
