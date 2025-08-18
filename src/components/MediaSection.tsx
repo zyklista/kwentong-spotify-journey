@@ -84,7 +84,46 @@ const MediaSection = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {episodes.map(episode => {})}
+            <div className="flex justify-center">
+              <iframe 
+                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" 
+                height="102px" 
+                width="400px" 
+                frameBorder="0" 
+                scrolling="no"
+                className="rounded-lg"
+              ></iframe>
+            </div>
+            <div className="flex justify-center">
+              <iframe 
+                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" 
+                height="102px" 
+                width="400px" 
+                frameBorder="0" 
+                scrolling="no"
+                className="rounded-lg"
+              ></iframe>
+            </div>
+            <div className="flex justify-center">
+              <iframe 
+                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" 
+                height="102px" 
+                width="400px" 
+                frameBorder="0" 
+                scrolling="no"
+                className="rounded-lg"
+              ></iframe>
+            </div>
+            <div className="flex justify-center">
+              <iframe 
+                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" 
+                height="102px" 
+                width="400px" 
+                frameBorder="0" 
+                scrolling="no"
+                className="rounded-lg"
+              ></iframe>
+            </div>
           </div>
 
           <div className="text-center">
