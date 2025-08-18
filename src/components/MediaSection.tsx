@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Calendar, Clock, ExternalLink, Youtube } from "lucide-react";
+import podcastMic from "@/assets/3d-podcast-mic.jpg";
+import geometricBg from "@/assets/3d-geometric-bg.jpg";
 const MediaSection = () => {
   const episodes = [{
     id: 1,
@@ -84,44 +86,56 @@ const MediaSection = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
+              <div className="absolute -top-4 -left-4 w-20 h-20 opacity-30">
+                <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
+              </div>
               <iframe 
                 src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" 
                 height="102px" 
                 width="400px" 
                 frameBorder="0" 
                 scrolling="no"
-                className="rounded-lg"
+                className="rounded-lg relative z-10"
               ></iframe>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
+              <div className="absolute -top-4 -right-4 w-20 h-20 opacity-30">
+                <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
+              </div>
               <iframe 
                 src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" 
                 height="102px" 
                 width="400px" 
                 frameBorder="0" 
                 scrolling="no"
-                className="rounded-lg"
+                className="rounded-lg relative z-10"
               ></iframe>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
+              <div className="absolute -bottom-4 -left-4 w-20 h-20 opacity-30">
+                <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
+              </div>
               <iframe 
                 src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" 
                 height="102px" 
                 width="400px" 
                 frameBorder="0" 
                 scrolling="no"
-                className="rounded-lg"
+                className="rounded-lg relative z-10"
               ></iframe>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
+              <div className="absolute -bottom-4 -right-4 w-20 h-20 opacity-30">
+                <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
+              </div>
               <iframe 
                 src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" 
                 height="102px" 
                 width="400px" 
                 frameBorder="0" 
                 scrolling="no"
-                className="rounded-lg"
+                className="rounded-lg relative z-10"
               ></iframe>
             </div>
           </div>
