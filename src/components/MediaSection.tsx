@@ -91,99 +91,30 @@ const MediaSection = () => {
               <div className="absolute -top-6 -left-6 w-24 h-24 opacity-30">
                 <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
               </div>
-              <iframe 
-                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" 
-                height="150px" 
-                width="500px" 
-                frameBorder="0" 
-                scrolling="no"
-                className="rounded-xl relative z-10 shadow-lg"
-              ></iframe>
+              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -top-6 -right-6 w-24 h-24 opacity-30">
                 <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
               </div>
-              <iframe 
-                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" 
-                height="150px" 
-                width="500px" 
-                frameBorder="0" 
-                scrolling="no"
-                className="rounded-xl relative z-10 shadow-lg"
-              ></iframe>
+              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -bottom-6 -left-6 w-24 h-24 opacity-30">
                 <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
               </div>
-              <iframe 
-                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" 
-                height="150px" 
-                width="500px" 
-                frameBorder="0" 
-                scrolling="no"
-                className="rounded-xl relative z-10 shadow-lg"
-              ></iframe>
+              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -bottom-6 -right-6 w-24 h-24 opacity-30">
                 <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
               </div>
-              <iframe 
-                src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" 
-                height="150px" 
-                width="500px" 
-                frameBorder="0" 
-                scrolling="no"
-                className="rounded-xl relative z-10 shadow-lg"
-              ></iframe>
+              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <div className="flex justify-center gap-4 mb-6">
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => window.open('https://facebook.com', '_blank')}
-                className="text-foreground hover:text-blue-600 p-4"
-              >
-                <Facebook className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => window.open('https://www.tiktok.com/@diary.of.an.ofw?_d=secCgYIASAHKAESPgo8KKVOzdq2py0hfcUqO2sexYFw6EoTmdxiFZQGAY9tWF7clcEyXn26SmkqAjAugeL5cYm2b899gd0gE1uGGgA%3D&_r=1&object_id=7538904547453666326&page_open_method=scan_code&schema_type=4&sec_uid=MS4wLjABAAAAnPvzQsX7aytEyivTZDuLfxhzaxMMWayczr3M5NA42q96wJKFZy28hrzTvtSjvSZB&share_app_id=1180&share_author_id=7538904547453666326&share_uid=7538904547453666326&tt_from=scan_code&utm_campaign=client_scan_code&utm_medium=2&utm_source=scan_code', '_blank')}
-                className="text-foreground hover:text-primary p-4"
-              >
-                <FaTiktok className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => window.open('https://instagram.com', '_blank')}
-                className="text-foreground hover:text-pink-600 p-4"
-              >
-                <Instagram className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => window.open('https://youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')}
-                className="text-foreground hover:text-red-600 p-4"
-              >
-                <Youtube className="w-6 h-6" />
-              </Button>
-              <Button
-                onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')}
-                variant="ghost"
-                size="lg"
-                className="text-foreground hover:text-green-600 p-4"
-              >
-                <Play className="w-6 h-6" />
-              </Button>
-            </div>
+            
             <Button onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-green-500 hover:bg-green-600 text-white transition-all duration-300 hover:scale-105">
               <Play className="mr-2 w-5 h-5" />
               View All Episodes on Spotify
