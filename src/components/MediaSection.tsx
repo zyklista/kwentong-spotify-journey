@@ -89,25 +89,25 @@ const MediaSection = () => {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div className="flex justify-center relative">
               <div className="absolute -top-6 -left-6 w-24 h-24 opacity-30">
-                <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
+                
               </div>
               <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -top-6 -right-6 w-24 h-24 opacity-30">
-                <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
+                
               </div>
               <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -bottom-6 -left-6 w-24 h-24 opacity-30">
-                <img src={geometricBg} alt="3D Geometric Background" className="w-full h-full object-cover rounded-lg" />
+                
               </div>
               <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
             <div className="flex justify-center relative">
               <div className="absolute -bottom-6 -right-6 w-24 h-24 opacity-30">
-                <img src={podcastMic} alt="3D Podcast Mic" className="w-full h-full object-cover rounded-lg" />
+                
               </div>
               <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
             </div>
