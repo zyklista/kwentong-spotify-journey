@@ -18,7 +18,7 @@ const Footer = () => {
           <p className="flex items-center justify-center gap-2">
             Made with <Heart className="w-4 h-4 text-red-500" /> for the Filipino community worldwide
           </p>
-          <p className="text-sm mt-2">© 2024 Diary of an OFW. All rights reserved.</p>
+          <p className="text-sm mt-2">© 2025 Diary of an OFW. All rights reserved.</p>
         </div>
       </div>
     </footer>;
