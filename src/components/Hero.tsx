@@ -39,7 +39,7 @@ const Hero = () => {
                 size="lg"
                 variant="secondary"
                 className="text-lg px-8 py-6 rounded-full shadow-medium hover:shadow-strong transition-all duration-300 hover:scale-105"
-                onClick={() => window.open('https://youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')}
+                onClick={() => window.open('https://www.youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')}
               >
                 Watch Our Latest Episode
                 <ArrowRight className="ml-2 w-5 h-5" />

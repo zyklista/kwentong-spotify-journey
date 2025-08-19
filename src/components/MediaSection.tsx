@@ -70,7 +70,7 @@ const MediaSection = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
               Watch our newest video content featuring inspiring OFW stories and interviews.
             </p>
-            <Button onClick={() => window.open('https://youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
+            <Button onClick={() => window.open('https://www.youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
               <Youtube className="mr-2 w-6 h-6" />
               Watch on YouTube
             </Button>
