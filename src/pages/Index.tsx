@@ -3,6 +3,8 @@ import Hero from "@/components/Hero";
 import MediaSection from "@/components/MediaSection";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
+import EbookPopup from "@/components/EbookPopup";
+import ChatBot from "@/components/ChatBot";
 
 const Index = () => {
   return (
@@ -14,6 +16,8 @@ const Index = () => {
         <ContactForm />
       </main>
       <Footer />
+      <EbookPopup />
+      <ChatBot />
     </div>
   );
 };
