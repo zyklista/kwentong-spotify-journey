@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      contact_submission_logs: {
+        Row: {
+          action: string
+          action_timestamp: string | null
+          actor_id: string | null
+          id: number
+          submission_id: number | null
+        }
+        Insert: {
+          action: string
+          action_timestamp?: string | null
+          actor_id?: string | null
+          id?: never
+          submission_id?: number | null
+        }
+        Update: {
+          action?: string
+          action_timestamp?: string | null
+          actor_id?: string | null
+          id?: never
+          submission_id?: number | null
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
