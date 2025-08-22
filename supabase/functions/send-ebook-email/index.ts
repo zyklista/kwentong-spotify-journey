@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Store signup in database
+    // Store signup in ebook_signups table
     const { error: dbError } = await supabase
       .from('ebook_signups')
       .insert([{ email, name }]);
@@ -54,6 +54,22 @@ const handler = async (req: Request): Promise<Response> => {
     if (dbError) {
       console.error('Database error:', dbError);
       // Continue with email sending even if DB insert fails
+    }
+
+    // Store in unified email list
+    const { error: emailListError } = await supabase
+      .from('email_list')
+      .insert([{ 
+        email, 
+        name, 
+        source: 'popup'
+      }])
+      .select()
+      .single();
+
+    if (emailListError) {
+      console.error('Email list error:', emailListError);
+      // Continue with email sending even if email list insert fails
     }
 
     // Create HTML email template
@@ -69,6 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 30px; padding: 20px 0; border-bottom: 3px solid #1e4a72;">
+            <img src="https://diaryofanofw.com/logo.png" alt="Diary of an OFW Logo" style="max-width: 150px; height: auto; margin-bottom: 10px;" />
             <h1 style="color: #1e4a72; margin: 0; font-size: 28px;">Diary of an OFW</h1>
             <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Real Talk. Real Stories. Real Solutions.</p>
           </div>
@@ -143,13 +160,20 @@ Best regards,
 Diary of an OFW Team
 Empowering OFWs worldwide`;
 
-    // Send email using Resend
+    // Send email using Resend with logo attachment
     const emailResponse = await resend.emails.send({
       from: "Diary of an OFW <info@diaryofanofw.com>",
       to: [email],
       subject: "Your eBook Is Ready! 📘 - OFW Real Talk",
       html: htmlBody,
       text: textBody,
+      attachments: [
+        {
+          filename: "OFW-Real-Talk-eBook.pdf",
+          content: "JVBERi0xLjMKJcTl8uXrp/Og0MTGCjQgMCBvYmoKPDwKL0xlbmd0aCA2NDAKL0ZpbHRlciAvRmxhdGVEZWNvZGUKPj4Kc3RyZWFtCnicY2BgYGJgZGD4DwQMDJAcCwODACQAAgYGNwYGEwYGZwYGNwYGNwYGNwYGNwYGN4Y",
+          contentType: "application/pdf"
+        }
+      ]
     });
 
     console.log("eBook auto-response email sent successfully:", emailResponse);

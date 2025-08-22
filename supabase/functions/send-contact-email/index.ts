@@ -59,6 +59,22 @@ const handler = async (req: Request): Promise<Response> => {
       // Continue with email sending even if DB insert fails
     }
 
+    // Store in unified email list
+    const { error: emailListError } = await supabase
+      .from('email_list')
+      .insert([{ 
+        email, 
+        name, 
+        source: 'contact_form'
+      }])
+      .select()
+      .single();
+
+    if (emailListError) {
+      console.error('Email list error:', emailListError);
+      // Continue with email sending even if email list insert fails
+    }
+
     // Send auto-reply to the visitor
     const visitorHtmlBody = `
     <!DOCTYPE html>
@@ -72,6 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 30px; padding: 20px 0; border-bottom: 3px solid #1e4a72;">
+            <img src="https://diaryofanofw.com/logo.png" alt="Diary of an OFW Logo" style="max-width: 150px; height: auto; margin-bottom: 10px;" />
             <h1 style="color: #1e4a72; margin: 0; font-size: 28px;">Diary of an OFW</h1>
             <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Real Talk. Real Stories. Real Solutions.</p>
           </div>
@@ -89,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin: 10px 0 0 0; font-size: 15px;">"${message.substring(0, 150)}${message.length > 150 ? '...' : ''}"</p>
             </div>
             
-            <p style="font-size: 16px;">Our team will review your message and get back to you within <strong>24-48 hours</strong>. We're committed to providing you with the support and information you need.</p>
+            <p style="font-size: 16px;">Our team will analyze your concern and respond to you within <strong>72 hours</strong>. We're committed to providing you with the support and information you need.</p>
             
             <div style="background-color: #1e4a72; color: white; padding: 20px; border-radius: 8px; margin: 25px 0;">
               <p style="margin: 0; font-size: 16px; text-align: center;">
@@ -137,7 +154,11 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #1e4a72;">New Contact Form Submission</h2>
+          <div style="text-align: center; margin-bottom: 30px; padding: 20px 0; border-bottom: 3px solid #dc2626;">
+            <img src="https://diaryofanofw.com/logo.png" alt="Diary of an OFW Logo" style="max-width: 150px; height: auto; margin-bottom: 10px;" />
+            <h1 style="color: #dc2626; margin: 0; font-size: 28px;">New Contact Submission</h1>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Diary of an OFW Admin Panel</p>
+          </div>
           
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p><strong>Name:</strong> ${name}</p>
