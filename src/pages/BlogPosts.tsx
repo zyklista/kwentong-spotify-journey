@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const BlogPosts = () => {
   const blogPosts = [
@@ -38,19 +39,32 @@ const BlogPosts = () => {
             </h1>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {blogPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="text-xl">{post.title}</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground">
-                      {post.date} • By {post.author}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{post.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              {blogPosts.map((post) => {
+                const getPostSlug = (id: number) => {
+                  switch(id) {
+                    case 1: return '/blog/starting-your-journey';
+                    case 2: return '/blog/success-stories-czech';
+                    case 3: return '/blog/financial-planning';
+                    default: return '/blog';
+                  }
+                };
+                
+                return (
+                  <Link key={post.id} to={getPostSlug(post.id)}>
+                    <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                      <CardHeader>
+                        <CardTitle className="text-xl">{post.title}</CardTitle>
+                        <CardDescription className="text-sm text-muted-foreground">
+                          {post.date} • By {post.author}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground">{post.description}</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
             
             <div className="text-center mt-12">

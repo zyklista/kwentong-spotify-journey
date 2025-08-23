@@ -1,16 +1,28 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ourStoryHero from "@/assets/our-story-hero.jpg";
 
 const OurStory = () => {
   return (
     <div className="min-h-screen">
       <Header />
       <main className="pt-16">
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <h1 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        {/* Hero Section */}
+        <section className="relative h-96 overflow-hidden">
+          <img 
+            src={ourStoryHero} 
+            alt="Our Story - Diary of an OFW community across the globe" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/40 flex items-center justify-center">
+            <h1 className="text-5xl font-bold text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Our Story
             </h1>
+          </div>
+        </section>
+        
+        <section className="py-16 px-4">
+          <div className="container mx-auto max-w-4xl">
             
             <div className="prose max-w-none space-y-6 text-lg leading-relaxed">
               <p className="text-xl">
