@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, Search, User, Globe, PenTool } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
@@ -24,7 +30,40 @@ const Header = () => {
             </div>
           </Link>
           
-          {/* Navigation removed from top right as requested */}
+          {/* Menu Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link to="/our-story">OUR STORY</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://www.facebook.com/diaryofanOFWofficial" target="_blank" rel="noopener noreferrer">
+                  INTERVIEWS
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://www.facebook.com/groups/filipinoinjihlava/" target="_blank" rel="noopener noreferrer">
+                  COMMUNITY
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://dmw.gov.ph" target="_blank" rel="noopener noreferrer">
+                  HELPFUL LINKS
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/blog">BLOG POSTS</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/connect">CONNECT</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>;
