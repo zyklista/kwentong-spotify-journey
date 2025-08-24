@@ -21,13 +21,16 @@ const EbookPopup = () => {
     e.preventDefault();
     if (email) {
       try {
-        const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/send-ebook-email', {
+        const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/mailchimp-signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2ZmR5Y2tpc2x1emd1bnBjc3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MjE5MzIsImV4cCI6MjA3MTE5NzkzMn0.O5xXsxe1cQMNyhO4KxFajmqPhVCEOO8EaxhcXcwe8rA`
           },
-          body: JSON.stringify({ email, name })
+          body: JSON.stringify({ 
+            email, 
+            name,
+            source: 'ebook_popup'
+          })
         });
 
         if (response.ok) {

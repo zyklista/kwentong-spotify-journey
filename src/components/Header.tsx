@@ -42,7 +42,7 @@ const Header = () => {
                 <Link to="/our-story">OUR STORY</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href="https://www.facebook.com/diaryofanOFWofficial" target="_blank" rel="noopener noreferrer">
+                <a href="https://youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer">
                   INTERVIEWS
                 </a>
               </DropdownMenuItem>
