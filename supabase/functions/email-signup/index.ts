@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface MailchimpSignupRequest {
+interface EmailSignupRequest {
   email: string;
   name?: string;
   source: string;
@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, name, source }: MailchimpSignupRequest = await req.json();
+    const { email, name, source }: EmailSignupRequest = await req.json();
 
     if (!email) {
       return new Response(
@@ -78,66 +78,45 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Visitor tracking error:', visitorError);
     }
 
-    // Add to Mailchimp
-    const mailchimpApiKey = Deno.env.get('MAILCHIMP_API_KEY');
-    const mailchimpListId = Deno.env.get('MAILCHIMP_LIST_ID');
+    // Add to SENDER.NET
+    const senderNetApiKey = Deno.env.get('SENDER_NET_API_KEY');
 
-    console.log('Mailchimp credentials check:', { 
-      hasApiKey: !!mailchimpApiKey, 
-      hasListId: !!mailchimpListId,
-      apiKeyPrefix: mailchimpApiKey?.substring(0, 8) + '...'
+    console.log('SENDER.NET credentials check:', { 
+      hasApiKey: !!senderNetApiKey,
+      apiKeyPrefix: senderNetApiKey?.substring(0, 8) + '...'
     });
 
-    if (mailchimpApiKey && mailchimpListId) {
-      const datacenter = mailchimpApiKey.split('-')[1];
-      const mailchimpUrl = `https://${datacenter}.api.mailchimp.com/3.0/lists/${mailchimpListId}/members`;
+    if (senderNetApiKey) {
+      const senderNetUrl = 'https://api.sender.net/v2/subscribers';
 
-      const mailchimpData = {
-        email_address: email,
-        status: 'subscribed',
-        merge_fields: {
-          FNAME: name ? name.split(' ')[0] : '',
-          LNAME: name ? name.split(' ').slice(1).join(' ') : ''
-        },
-        tags: [source]
+      const senderNetData = {
+        email: email,
+        firstname: name ? name.split(' ')[0] : '',
+        lastname: name ? name.split(' ').slice(1).join(' ') : '',
+        groups: [source], // Use source as group/tag
+        trigger_automation: true
       };
 
       try {
-        const mailchimpResponse = await fetch(mailchimpUrl, {
+        const senderNetResponse = await fetch(senderNetUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${mailchimpApiKey}`,
+            'Authorization': `Bearer ${senderNetApiKey}`,
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          body: JSON.stringify(mailchimpData),
+          body: JSON.stringify(senderNetData),
         });
 
-        const mailchimpResult = await mailchimpResponse.json();
+        const senderNetResult = await senderNetResponse.json();
         
-        if (!mailchimpResponse.ok) {
-          console.error('Mailchimp error:', mailchimpResult);
-          
-          // If email already exists, try to update instead
-          if (mailchimpResult.title === 'Member Exists') {
-            const updateResponse = await fetch(`${mailchimpUrl}/${btoa(email.toLowerCase())}`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${mailchimpApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                ...mailchimpData,
-                status: 'subscribed'
-              }),
-            });
-            
-            console.log('Mailchimp update response:', await updateResponse.json());
-          }
+        if (!senderNetResponse.ok) {
+          console.error('SENDER.NET error:', senderNetResult);
         } else {
-          console.log('Successfully added to Mailchimp:', mailchimpResult);
+          console.log('Successfully added to SENDER.NET:', senderNetResult);
         }
-      } catch (mailchimpError) {
-        console.error('Mailchimp API error:', mailchimpError);
+      } catch (senderNetError) {
+        console.error('SENDER.NET API error:', senderNetError);
       }
     }
 

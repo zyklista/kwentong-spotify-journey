@@ -21,7 +21,7 @@ const EbookPopup = () => {
     e.preventDefault();
     if (email) {
       try {
-        const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/mailchimp-signup', {
+        const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/email-signup', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

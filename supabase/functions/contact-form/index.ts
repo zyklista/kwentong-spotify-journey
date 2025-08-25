@@ -104,54 +104,40 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Visitor tracking error:', visitorError);
     }
 
-    // Add to Mailchimp
-    const mailchimpApiKey = Deno.env.get('MAILCHIMP_API_KEY');
-    const mailchimpListId = Deno.env.get('MAILCHIMP_LIST_ID');
+    // Add to SENDER.NET
+    const senderNetApiKey = Deno.env.get('SENDER_NET_API_KEY');
 
-    if (mailchimpApiKey && mailchimpListId) {
-      const datacenter = mailchimpApiKey.split('-')[1];
-      const mailchimpUrl = `https://${datacenter}.api.mailchimp.com/3.0/lists/${mailchimpListId}/members`;
+    if (senderNetApiKey) {
+      const senderNetUrl = 'https://api.sender.net/v2/subscribers';
 
-      const mailchimpData = {
-        email_address: email,
-        status: 'subscribed',
-        merge_fields: {
-          FNAME: name.split(' ')[0],
-          LNAME: name.split(' ').slice(1).join(' ')
-        },
-        tags: ['contact_form', service || 'general_inquiry']
+      const senderNetData = {
+        email: email,
+        firstname: name.split(' ')[0],
+        lastname: name.split(' ').slice(1).join(' '),
+        groups: ['contact_form', service || 'general_inquiry'],
+        trigger_automation: true
       };
 
       try {
-        const mailchimpResponse = await fetch(mailchimpUrl, {
+        const senderNetResponse = await fetch(senderNetUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${mailchimpApiKey}`,
+            'Authorization': `Bearer ${senderNetApiKey}`,
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          body: JSON.stringify(mailchimpData),
+          body: JSON.stringify(senderNetData),
         });
 
-        const mailchimpResult = await mailchimpResponse.json();
+        const senderNetResult = await senderNetResponse.json();
         
-        if (!mailchimpResponse.ok && mailchimpResult.title === 'Member Exists') {
-          // Update existing member
-          const updateResponse = await fetch(`${mailchimpUrl}/${btoa(email.toLowerCase())}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${mailchimpApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              ...mailchimpData,
-              status: 'subscribed'
-            }),
-          });
-          
-          console.log('Mailchimp update response:', await updateResponse.json());
+        if (!senderNetResponse.ok) {
+          console.error('SENDER.NET error:', senderNetResult);
+        } else {
+          console.log('Successfully added to SENDER.NET:', senderNetResult);
         }
-      } catch (mailchimpError) {
-        console.error('Mailchimp API error:', mailchimpError);
+      } catch (senderNetError) {
+        console.error('SENDER.NET API error:', senderNetError);
       }
     }
 
