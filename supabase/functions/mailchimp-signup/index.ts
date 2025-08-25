@@ -82,6 +82,12 @@ const handler = async (req: Request): Promise<Response> => {
     const mailchimpApiKey = Deno.env.get('MAILCHIMP_API_KEY');
     const mailchimpListId = Deno.env.get('MAILCHIMP_LIST_ID');
 
+    console.log('Mailchimp credentials check:', { 
+      hasApiKey: !!mailchimpApiKey, 
+      hasListId: !!mailchimpListId,
+      apiKeyPrefix: mailchimpApiKey?.substring(0, 8) + '...'
+    });
+
     if (mailchimpApiKey && mailchimpListId) {
       const datacenter = mailchimpApiKey.split('-')[1];
       const mailchimpUrl = `https://${datacenter}.api.mailchimp.com/3.0/lists/${mailchimpListId}/members`;

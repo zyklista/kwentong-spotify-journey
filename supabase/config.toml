@@ -58,6 +58,9 @@ verify_jwt = false
 [functions.contact-form]
 verify_jwt = false
 
+[functions.media-sync]
+verify_jwt = false
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083
