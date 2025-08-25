@@ -1,9 +1,67 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, Clock, Users, Heart } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+
+interface SpotifyEpisode {
+  id: string;
+  spotify_id: string;
+  title: string;
+  description: string;
+  duration_ms: number;
+  release_date: string;
+  thumbnail_url: string | null;
+  spotify_url: string;
+}
+
+interface LegacyStory {
+  id: number;
+  title: string;
+  artist: string;
+  duration: string;
+  plays: string;
+  likes: string;
+  image: string;
+  category: string;
+}
 
 const SpotifySection = () => {
-  const stories = [
+  const [episodes, setEpisodes] = useState<SpotifyEpisode[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSpotifyEpisodes();
+  }, []);
+
+  const fetchSpotifyEpisodes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('spotify_episodes')
+        .select('*')
+        .order('release_date', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching Spotify episodes:', error);
+      } else if (data && data.length > 0) {
+        setEpisodes(data);
+      }
+    } catch (error) {
+      console.error('Error fetching Spotify episodes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDuration = (durationMs: number) => {
+    const minutes = Math.floor(durationMs / 60000);
+    const seconds = Math.floor((durationMs % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Static fallback data
+  const staticStories: LegacyStory[] = [
     {
       id: 1,
       title: "Pamilyang Nagkakapit sa Pagkakamalayo",
@@ -56,6 +114,23 @@ const SpotifySection = () => {
     }
   ];
 
+  // Use real episodes if available, otherwise fall back to static data
+  const displayData = episodes.length > 0 ? episodes : staticStories;
+  const featuredEpisode = displayData[0];
+  const gridEpisodes = displayData.slice(1);
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-pulse">Loading episodes...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
@@ -67,7 +142,7 @@ const SpotifySection = () => {
               Pakinggan ang mga inspirational na kwento ng mga kababayan natin sa ibang bansa
             </p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')}>
             Tingnan Lahat
           </Button>
         </div>
@@ -78,30 +153,52 @@ const SpotifySection = () => {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="w-32 h-32 rounded-lg overflow-hidden bg-primary/20 flex items-center justify-center">
                 <img 
-                  src={stories[0].image} 
-                  alt={stories[0].title}
+                  src={'thumbnail_url' in featuredEpisode ? featuredEpisode.thumbnail_url || '/placeholder.svg' : featuredEpisode.image} 
+                  alt={featuredEpisode.title}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex-1 text-center md:text-left">
                 <div className="text-sm text-primary font-medium mb-1">FEATURED STORY</div>
-                <h3 className="text-2xl font-bold mb-2">{stories[0].title}</h3>
-                <p className="text-muted-foreground mb-4">{stories[0].artist}</p>
+                <h3 className="text-2xl font-bold mb-2">{featuredEpisode.title}</h3>
+                <p className="text-muted-foreground mb-4">
+                  {'description' in featuredEpisode ? 
+                    featuredEpisode.description?.substring(0, 100) + '...' : 
+                    featuredEpisode.artist
+                  }
+                </p>
                 <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {stories[0].duration}
+                    {'duration_ms' in featuredEpisode ? 
+                      formatDuration(featuredEpisode.duration_ms) : 
+                      featuredEpisode.duration
+                    }
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {stories[0].plays} plays
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    {stories[0].likes}
-                  </div>
+                  {'plays' in featuredEpisode && (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        {featuredEpisode.plays} plays
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-4 h-4" />
+                        {featuredEpisode.likes}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <Button variant="spotify" size="lg" className="w-full md:w-auto">
+                <Button 
+                  variant="default" 
+                  size="lg" 
+                  className="w-full md:w-auto bg-green-500 hover:bg-green-600"
+                  onClick={() => {
+                    const url = 'spotify_url' in featuredEpisode ? 
+                      featuredEpisode.spotify_url : 
+                      'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty';
+                    window.open(url, '_blank');
+                  }}
+                >
                   <Play className="w-5 h-5 mr-2" />
                   Makinig Ngayon
                 </Button>
@@ -112,45 +209,63 @@ const SpotifySection = () => {
 
         {/* Stories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {stories.slice(1).map((story) => (
-            <Card key={story.id} className="group hover:shadow-float transition-all duration-300 cursor-pointer">
+          {gridEpisodes.map((episode, index) => (
+            <Card key={'spotify_id' in episode ? episode.spotify_id : episode.id} className="group hover:shadow-float transition-all duration-300 cursor-pointer">
               <CardContent className="p-4">
                 <div className="relative mb-4">
                   <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                     <img 
-                      src={story.image} 
-                      alt={story.title}
+                      src={'thumbnail_url' in episode ? episode.thumbnail_url || '/placeholder.svg' : episode.image} 
+                      alt={episode.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <Button 
-                    variant="hero" 
+                    variant="default" 
                     size="icon" 
-                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg"
+                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg bg-green-500 hover:bg-green-600"
+                    onClick={() => {
+                      const url = 'spotify_url' in episode ? 
+                        episode.spotify_url : 
+                        'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty';
+                      window.open(url, '_blank');
+                    }}
                   >
                     <Play className="w-4 h-4" />
                   </Button>
-                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    {story.category}
-                  </div>
+                  {'category' in episode && (
+                    <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      {episode.category}
+                    </div>
+                  )}
                 </div>
-                <h4 className="font-semibold text-sm mb-1 line-clamp-2">{story.title}</h4>
-                <p className="text-xs text-muted-foreground mb-2">{story.artist}</p>
+                <h4 className="font-semibold text-sm mb-1 line-clamp-2">{episode.title}</h4>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {'description' in episode ? 
+                    episode.description?.substring(0, 60) + '...' : 
+                    episode.artist
+                  }
+                </p>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {story.duration}
+                    {'duration_ms' in episode ? 
+                      formatDuration(episode.duration_ms) : 
+                      episode.duration
+                    }
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {story.plays}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Heart className="w-3 h-3" />
-                      {story.likes}
-                    </span>
-                  </div>
+                  {'plays' in episode && (
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {episode.plays}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Heart className="w-3 h-3" />
+                        {episode.likes}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
