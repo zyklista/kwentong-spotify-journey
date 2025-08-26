@@ -114,8 +114,10 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         firstname: name.split(' ')[0],
         lastname: name.split(' ').slice(1).join(' '),
-        groups: ['contact_form', service || 'general_inquiry'],
-        trigger_automation: true
+        groups: ['aO6NBQ'], // Your ebook subscribers group ID
+        fields: {
+          services: service || 'Website Development'
+        }
       };
 
       try {
