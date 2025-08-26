@@ -8,6 +8,8 @@ import NotFound from "./pages/NotFound";
 import OurStory from "./pages/OurStory";
 import BlogPosts from "./pages/BlogPosts";
 import Connect from "./pages/Connect";
+import ContactFormPage from "./pages/ContactFormPage";
+import EbookSignupPage from "./pages/EbookSignupPage";
 import StartingYourJourney from "./pages/blog/StartingYourJourney";
 import SuccessStoriesCzech from "./pages/blog/SuccessStoriesCzech";
 import FinancialPlanning from "./pages/blog/FinancialPlanning";
@@ -48,6 +50,8 @@ const App = () => (
           <Route path="/blog/legal-guide" element={<LegalGuide />} />
           <Route path="/blog/mental-health" element={<MentalHealth />} />
           <Route path="/connect" element={<Connect />} />
+          <Route path="/contact" element={<ContactFormPage />} />
+          <Route path="/ebook" element={<EbookSignupPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
