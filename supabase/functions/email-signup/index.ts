@@ -46,7 +46,21 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Store in database
+    // Store in ebook_signups table
+    const { error: ebookError } = await supabase
+      .from('ebook_signups')
+      .insert([
+        {
+          email,
+          name: name || null
+        }
+      ]);
+
+    if (ebookError) {
+      console.error('Ebook signup error:', ebookError);
+    }
+
+    // Store in email_list
     const { error: dbError } = await supabase
       .from('email_list')
       .insert([
@@ -93,8 +107,10 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         firstname: name ? name.split(' ')[0] : '',
         lastname: name ? name.split(' ').slice(1).join(' ') : '',
-        groups: [source], // Use source as group/tag
-        trigger_automation: true
+        groups: ['aO6NBQ'], // Your ebook subscribers group ID
+        fields: {
+          services: 'Website Development'
+        }
       };
 
       try {

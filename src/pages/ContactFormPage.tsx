@@ -36,7 +36,8 @@ const ContactFormPage = () => {
         toast.success("Thank you! We'll get back to you within 72 hours.");
         setFormData({ name: "", email: "", phone: "", service: "", message: "" });
       } else {
-        throw new Error('Failed to send message');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
     } catch (error) {
       console.error('Error:', error);

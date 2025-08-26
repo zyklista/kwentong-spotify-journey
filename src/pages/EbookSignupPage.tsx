@@ -34,12 +34,15 @@ const EbookSignupPage = () => {
         setIsSuccess(true);
         toast.success("Thank you! Your free e-book will be sent to your inbox shortly.");
       } else {
-        console.error('Failed to send email');
+        const errorData = await response.json();
+        console.error('Failed to send email:', errorData);
+        // Show success anyway to avoid confusing users
         setIsSuccess(true);
         toast.success("Thank you! Your free e-book will be sent to your inbox shortly.");
       }
     } catch (error) {
       console.error('Error sending email:', error);
+      // Show success anyway to avoid confusing users
       setIsSuccess(true);
       toast.success("Thank you! Your free e-book will be sent to your inbox shortly.");
     } finally {
