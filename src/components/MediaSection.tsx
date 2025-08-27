@@ -157,7 +157,7 @@ const MediaSection = () => {
                   />
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-all duration-300">
                     <Button 
-                      onClick={() => window.open(latestVideo.youtube_url, '_blank')}
+                      onClick={() => window.open('https://youtu.be/7aJPN-GfivY?si=4BL5_pslsf01cPQz', '_blank')}
                       size="lg" 
                       className="bg-red-500 hover:bg-red-600 text-white rounded-full p-4"
                     >
