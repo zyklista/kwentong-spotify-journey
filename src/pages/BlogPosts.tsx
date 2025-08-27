@@ -14,8 +14,8 @@ const BlogPosts = () => {
     },
     {
       id: 2,
-      title: "Success Stories from the Czech Republic",
-      description: "Inspiring stories of Filipino entrepreneurs who made it big in Europe.",
+      title: "Handling Homesickness and Loneliness",
+      description: "Practical strategies to cope with emotional challenges of working abroad.",
       date: "March 10, 2024",
       author: "Diary of an OFW Team"
     },
@@ -95,6 +95,41 @@ const BlogPosts = () => {
       description: "Taking care of your emotional and psychological well-being abroad.",
       date: "January 10, 2024",
       author: "Diary of an OFW Team"
+    },
+    {
+      id: 14,
+      title: "Language Learning for OFWs",
+      description: "Essential language skills to succeed in your host country.",
+      date: "January 5, 2024",
+      author: "Diary of an OFW Team"
+    },
+    {
+      id: 15,
+      title: "OFW Success Stories from the Middle East",
+      description: "Inspiring journeys of Filipino workers in Gulf countries.",
+      date: "December 30, 2023",
+      author: "Diary of an OFW Team"
+    },
+    {
+      id: 16,
+      title: "Building Your Emergency Fund",
+      description: "Creating financial security while working abroad.",
+      date: "December 25, 2023",
+      author: "Diary of an OFW Team"
+    },
+    {
+      id: 17,
+      title: "Seasonal Work Opportunities",
+      description: "Finding temporary and seasonal jobs in different countries.",
+      date: "December 20, 2023",
+      author: "Diary of an OFW Team"
+    },
+    {
+      id: 18,
+      title: "OFW Family Dynamics",
+      description: "Managing relationships and responsibilities from afar.",
+      date: "December 15, 2023",
+      author: "Diary of an OFW Team"
     }
   ];
 
@@ -113,7 +148,7 @@ const BlogPosts = () => {
                 const getPostSlug = (id: number) => {
                   const slugs = {
                     1: '/blog/starting-your-journey',
-                    2: '/blog/success-stories-czech',
+                    2: '/blog/handling-homesickness',
                     3: '/blog/financial-planning',
                     4: '/blog/skills-development',
                     5: '/blog/staying-connected',
@@ -124,7 +159,12 @@ const BlogPosts = () => {
                     10: '/blog/coming-home',
                     11: '/blog/career-growth',
                     12: '/blog/legal-guide',
-                    13: '/blog/mental-health'
+                    13: '/blog/mental-health',
+                    14: '/blog/language-learning',
+                    15: '/blog/middle-east-success-stories',
+                    16: '/blog/emergency-fund',
+                    17: '/blog/seasonal-work',
+                    18: '/blog/family-dynamics'
                   };
                   return slugs[id as keyof typeof slugs] || '/blog';
                 };

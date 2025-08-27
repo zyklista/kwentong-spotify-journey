@@ -162,7 +162,7 @@ const ContactForm = () => {
 
         {/* Social Media Icons - Extra Large as requested */}
         <div className="flex justify-center gap-2 sm:gap-4 lg:gap-6 mt-20 px-4">
-          <Button variant="ghost" size="lg" onClick={() => window.open('https://www.facebook.com/diaryofanofw', '_blank')} className="text-primary hover:bg-primary/20 p-6 sm:p-8 lg:p-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mx-[32px] py-[60px] px-[60px]">
+          <Button variant="ghost" size="lg" onClick={() => window.open('https://www.facebook.com/diaryofanOFWofficial', '_blank')} className="text-primary hover:bg-primary/20 p-6 sm:p-8 lg:p-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 mx-[32px] py-[60px] px-[60px]">
             <Facebook className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16" />
           </Button>
           <Button variant="ghost" size="lg" onClick={() => window.open('https://instagram.com/diary_of_an_ofw', '_blank')} className="text-primary hover:bg-primary/20 p-6 sm:p-8 lg:p-10 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 px-[60px] mx-[29px] py-[60px]">
