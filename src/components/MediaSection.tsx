@@ -2,9 +2,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Calendar, Clock, ExternalLink, Youtube, Facebook, Instagram } from "lucide-react";
 import { FaTiktok } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import podcastMic from "@/assets/3d-podcast-mic.jpg";
 import geometricBg from "@/assets/3d-geometric-bg.jpg";
 const MediaSection = () => {
+  const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
+  const [latestVideo, setLatestVideo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   const episodes = [{
     id: 1,
     title: "Journey to Success: From OFW to Entrepreneur",
@@ -38,6 +44,72 @@ const MediaSection = () => {
     thumbnail: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop",
     spotifyUrl: "https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty"
   }];
+
+  useEffect(() => {
+    fetchYouTubeVideos();
+    // Trigger sync to get latest videos from YouTube
+    triggerYouTubeSync();
+  }, []);
+
+  const fetchYouTubeVideos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('youtube_videos')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching YouTube videos:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setYoutubeVideos(data);
+        setLatestVideo(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube videos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const triggerYouTubeSync = async () => {
+    try {
+      await supabase.functions.invoke('media-sync', {
+        body: { platform: 'youtube', force: false }
+      });
+    } catch (error) {
+      console.error('Error triggering YouTube sync:', error);
+    }
+  };
+
+  const formatDuration = (duration: string) => {
+    if (!duration) return '';
+    // Convert ISO 8601 duration (PT1H2M30S) to readable format
+    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!match) return duration;
+    
+    const hours = parseInt(match[1]) || 0;
+    const minutes = parseInt(match[2]) || 0;
+    const seconds = parseInt(match[3]) || 0;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
   return <section className="py-20 relative overflow-hidden">
       {/* Animated Art Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5">
@@ -70,7 +142,49 @@ const MediaSection = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
               Watch our newest video content featuring inspiring OFW stories and interviews.
             </p>
-            <Button onClick={() => window.open('https://www.youtube.com/@diaryofanofw?si=kQW85veqiwAgd7cn', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
+            
+            {loading ? (
+              <div className="flex justify-center mb-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : latestVideo ? (
+              <Card className="max-w-2xl mx-auto mb-8 overflow-hidden hover:shadow-xl transition-all duration-300">
+                <div className="relative">
+                  <img 
+                    src={latestVideo.thumbnail_url} 
+                    alt={latestVideo.title}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-all duration-300">
+                    <Button 
+                      onClick={() => window.open(latestVideo.youtube_url, '_blank')}
+                      size="lg" 
+                      className="bg-red-500 hover:bg-red-600 text-white rounded-full p-4"
+                    >
+                      <Play className="w-8 h-8" />
+                    </Button>
+                  </div>
+                </div>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-2 line-clamp-2">{latestVideo.title}</h3>
+                  <p className="text-muted-foreground mb-4 line-clamp-3">{latestVideo.description}</p>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {formatDate(latestVideo.published_at)}
+                    </div>
+                    {latestVideo.duration && (
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {formatDuration(latestVideo.duration)}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+            
+            <Button onClick={() => window.open('https://youtube.com/@diaryofanofw?si=81gLTL37rQQJdv_c', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
               <Youtube className="mr-2 w-6 h-6" />
               Watch on YouTube
             </Button>
