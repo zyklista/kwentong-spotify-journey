@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
         lastname: name ? name.split(' ').slice(1).join(' ') : '',
         groups: ['aO6NBQ'], // E-book subscribers list ID
         fields: {
-          services: 'Website Development'
+          services: 'E-book Download'
         }
       };
 
@@ -134,6 +134,8 @@ const handler = async (req: Request): Promise<Response> => {
       } catch (senderNetError) {
         console.error('SENDER.NET API error:', senderNetError);
       }
+    } else {
+      console.log('SENDER.NET API key not found');
     }
 
     return new Response(

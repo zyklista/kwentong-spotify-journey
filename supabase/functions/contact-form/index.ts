@@ -107,8 +107,26 @@ const handler = async (req: Request): Promise<Response> => {
     // Add to SENDER.NET
     const senderNetApiKey = Deno.env.get('SENDER_NET_API_KEY');
 
+    console.log('SENDER.NET credentials check:', { 
+      hasApiKey: !!senderNetApiKey,
+      apiKeyPrefix: senderNetApiKey?.substring(0, 8) + '...'
+    });
+
     if (senderNetApiKey) {
       const senderNetUrl = 'https://api.sender.net/v2/subscribers';
+
+      // Map service values to acceptable options
+      const serviceMapping: { [key: string]: string } = {
+        'admin-tasks': 'Administrative Tasks',
+        'data-entry': 'Data Entry',
+        'customer-service': 'Customer Service',
+        'digital-marketing': 'Digital Marketing',
+        'content-creation': 'Content Creation',
+        'web-development': 'Website Development',
+        'other': 'Other Services'
+      };
+
+      const mappedService = service ? serviceMapping[service] || service : 'Contact Form';
 
       const senderNetData = {
         email: email,
@@ -116,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
         lastname: name.split(' ').slice(1).join(' '),
         groups: ['aMWLzR'], // Contact form list ID
         fields: {
-          services: service || 'Website Development'
+          services: mappedService
         }
       };
 
@@ -141,6 +159,8 @@ const handler = async (req: Request): Promise<Response> => {
       } catch (senderNetError) {
         console.error('SENDER.NET API error:', senderNetError);
       }
+    } else {
+      console.log('SENDER.NET API key not found');
     }
 
     return new Response(
