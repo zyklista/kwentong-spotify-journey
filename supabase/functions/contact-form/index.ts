@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         firstname: name.split(' ')[0],
         lastname: name.split(' ').slice(1).join(' '),
-        groups: ['aO6NBQ'], // Your ebook subscribers group ID
+        groups: ['aMWLzR'], // Contact form list ID
         fields: {
           services: service || 'Website Development'
         }
