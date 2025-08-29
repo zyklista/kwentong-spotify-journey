@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         firstname: name ? name.split(' ')[0] : '',
         lastname: name ? name.split(' ').slice(1).join(' ') : '',
-        groups: ['aO6NBQ'], // E-book subscribers list ID
+        groups: [Deno.env.get('SENDER_NET_EBOOK_LIST_ID') || 'aO6NBQ'], // E-book subscribers list ID
         fields: {
           services: 'E-book Download'
         }

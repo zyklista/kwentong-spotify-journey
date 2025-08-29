@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         firstname: name.split(' ')[0],
         lastname: name.split(' ').slice(1).join(' '),
-        groups: ['aMWLzR'], // Contact form list ID
+        groups: [Deno.env.get('SENDER_NET_CONTACT_LIST_ID') || 'aMWLzR'], // Contact form list ID
         fields: {
           services: mappedService
         }
