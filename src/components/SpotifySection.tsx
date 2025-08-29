@@ -6,13 +6,15 @@ import { useEffect, useState } from "react";
 
 interface SpotifyEpisode {
   id: string;
-  spotify_id: string;
+  episode_id: string;
   title: string;
-  description: string;
+  description: string | null;
   duration_ms: number;
   release_date: string;
-  thumbnail_url: string | null;
-  spotify_url: string;
+  image_url: string | null;
+  external_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface LegacyStory {
@@ -153,7 +155,7 @@ const SpotifySection = () => {
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="w-32 h-32 rounded-lg overflow-hidden bg-primary/20 flex items-center justify-center">
                 <img 
-                  src={'thumbnail_url' in featuredEpisode ? featuredEpisode.thumbnail_url || '/placeholder.svg' : featuredEpisode.image} 
+                  src={'image_url' in featuredEpisode ? featuredEpisode.image_url || '/placeholder.svg' : featuredEpisode.image} 
                   alt={featuredEpisode.title}
                   className="w-full h-full object-cover"
                 />
@@ -193,8 +195,8 @@ const SpotifySection = () => {
                   size="lg" 
                   className="w-full md:w-auto bg-green-500 hover:bg-green-600"
                   onClick={() => {
-                    const url = 'spotify_url' in featuredEpisode ? 
-                      featuredEpisode.spotify_url : 
+                    const url = 'external_url' in featuredEpisode ? 
+                      featuredEpisode.external_url || 'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty' : 
                       'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty';
                     window.open(url, '_blank');
                   }}
@@ -210,12 +212,12 @@ const SpotifySection = () => {
         {/* Stories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {gridEpisodes.map((episode, index) => (
-            <Card key={'spotify_id' in episode ? episode.spotify_id : episode.id} className="group hover:shadow-float transition-all duration-300 cursor-pointer">
+            <Card key={'episode_id' in episode ? episode.episode_id : episode.id} className="group hover:shadow-float transition-all duration-300 cursor-pointer">
               <CardContent className="p-4">
                 <div className="relative mb-4">
                   <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                     <img 
-                      src={'thumbnail_url' in episode ? episode.thumbnail_url || '/placeholder.svg' : episode.image} 
+                      src={'image_url' in episode ? episode.image_url || '/placeholder.svg' : episode.image} 
                       alt={episode.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -225,8 +227,8 @@ const SpotifySection = () => {
                     size="icon" 
                     className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg bg-green-500 hover:bg-green-600"
                     onClick={() => {
-                      const url = 'spotify_url' in episode ? 
-                        episode.spotify_url : 
+                      const url = 'external_url' in episode ? 
+                        episode.external_url || 'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty' : 
                         'https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty';
                       window.open(url, '_blank');
                     }}
