@@ -14,7 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      media_sync_status: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          platform: string
+          sync_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform: string
+          sync_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform?: string
+          sync_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      spotify_episodes: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_ms: number | null
+          episode_id: string
+          external_url: string | null
+          id: string
+          image_url: string | null
+          release_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_ms?: number | null
+          episode_id: string
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          release_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_ms?: number | null
+          episode_id?: string
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          release_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      youtube_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          like_count: number | null
+          published_at: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_id: string
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          like_count?: number | null
+          published_at: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_id: string
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          like_count?: number | null
+          published_at?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
