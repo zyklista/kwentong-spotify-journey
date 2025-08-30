@@ -37,7 +37,7 @@ const ContactForm = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/contact-form', {
+      const response = await fetch('https://vadhwoknebojprawjwmy.supabase.co/functions/v1/contact-form', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
