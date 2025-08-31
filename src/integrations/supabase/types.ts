@@ -131,6 +131,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sendernet_log: {
+        Row: {
+          created_at: string | null
+          id: number
+          payload: Json
+          response: Json | null
+          table_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          payload: Json
+          response?: Json | null
+          table_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          payload?: Json
+          response?: Json | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       spotify_episodes: {
         Row: {
           created_at: string
