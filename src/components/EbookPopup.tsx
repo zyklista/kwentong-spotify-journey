@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const EbookPopup = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -22,39 +23,27 @@ const EbookPopup = () => {
     if (email) {
       try {
         console.log('Submitting ebook form:', { email, name });
-        const response = await fetch('https://vadhwoknebojprawjwmy.supabase.co/functions/v1/email-signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            email, 
-            name,
-            source: 'ebook_popup'
-          })
-        });
+        
+        // Insert directly into Supabase
+        const { data, error } = await supabase
+          .from("ebook_signups")
+          .insert([{ email, name }]);
 
-        const responseData = await response.json();
-        console.log('Ebook form response:', responseData);
-
-        if (response.ok) {
-          setIsSuccess(true);
-          setTimeout(() => {
-            setIsVisible(false);
-          }, 3000);
-        } else {
-          console.error('Failed to submit ebook form:', responseData);
-          setIsSuccess(true);
-          setTimeout(() => {
-            setIsVisible(false);
-          }, 3000);
+        if (error) {
+          console.error('Supabase error:', error.message);
+          alert("❌ " + error.message);
+          return;
         }
-      } catch (error) {
-        console.error('Error submitting ebook form:', error);
+
+        console.log('Ebook form success:', data);
         setIsSuccess(true);
         setTimeout(() => {
           setIsVisible(false);
         }, 3000);
+        
+      } catch (error) {
+        console.error('Error submitting ebook form:', error);
+        alert("❌ Error submitting form");
       }
     }
   };
