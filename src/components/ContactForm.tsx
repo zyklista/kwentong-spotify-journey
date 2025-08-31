@@ -6,6 +6,7 @@ import { MessageCircle, Send, User, Mail, Phone, Briefcase, Facebook, Instagram,
 import { FaTiktok } from "react-icons/fa";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 const ContactForm = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -37,31 +38,34 @@ const ContactForm = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://vadhwoknebojprawjwmy.supabase.co/functions/v1/contact-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      // Insert directly into contact_submissions table
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          service: formData.service || null,
+          message: formData.message
+        }]);
 
-      if (response.ok) {
-        toast({
-          title: "Message sent successfully!",
-          description: "Thank you for contacting us. We'll get back to you soon.",
-        });
-        
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          service: '',
-          message: ''
-        });
-      } else {
-        throw new Error('Failed to send message');
+      if (error) {
+        throw error;
       }
+
+      toast({
+        title: "Message sent successfully!",
+        description: "Thank you for contacting us. We'll get back to you soon.",
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        service: '',
+        message: ''
+      });
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
