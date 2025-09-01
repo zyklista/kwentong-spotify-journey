@@ -71,12 +71,9 @@ const ReviewsSection = () => {
               <div className="flex items-center gap-2 mb-4">
                 {renderStars(review.rating)}
               </div>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                "{review.review}"
-              </p>
               <div className="border-t pt-4">
                 <p className="font-semibold">{review.name}</p>
-                
+                <p className="text-sm text-muted-foreground">{review.location}</p>
               </div>
             </Card>)}
         </div>
