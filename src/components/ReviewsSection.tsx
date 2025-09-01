@@ -52,9 +52,6 @@ const ReviewsSection = () => {
             <Star className="w-4 h-4" />
             Client Reviews
           </div>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            What Our Clients Say
-          </h2>
           <div className="flex items-center justify-center gap-2 mb-4">
             {renderStars(Math.round(averageRating))}
             <span className="text-xl font-semibold ml-2">{averageRating.toFixed(1)}</span>
