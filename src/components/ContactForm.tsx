@@ -8,7 +8,9 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 const ContactForm = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -36,28 +38,25 @@ const ContactForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       // Insert directly into contact_submissions table
-      const { error } = await supabase
-        .from('contact_submissions')
-        .insert([{
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          service: formData.service || null,
-          message: formData.message
-        }]);
-
+      const {
+        error
+      } = await supabase.from('contact_submissions').insert([{
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        service: formData.service || null,
+        message: formData.message
+      }]);
       if (error) {
         throw error;
       }
-
       toast({
         title: "Message sent successfully!",
-        description: "Thank you for contacting us. We'll get back to you soon.",
+        description: "Thank you for contacting us. We'll get back to you soon."
       });
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -71,7 +70,7 @@ const ContactForm = () => {
       toast({
         title: "Error sending message",
         description: "Please try again or contact us directly at info@diaryofanofw.com",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
@@ -88,7 +87,7 @@ const ContactForm = () => {
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
             How Can We Help You?
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">We offer various services to support your journey. But just like the doctor, we want to know if we fits your needs. Send us how can we help you and we'll get in touch with you within 72hrs.</p>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">We offer various services to support your journey. But just like the doctor, we want to know if we fits your needs. Send us how can we help you and we'll get in touch with you within 72hrs</p>
         </div>
 
         <div className="max-w-4xl mx-auto">
@@ -150,12 +149,7 @@ const ContactForm = () => {
               </div>
 
               <div className="text-center pt-4">
-                <Button 
-                  type="submit" 
-                  size="lg" 
-                  disabled={isSubmitting}
-                  className="text-lg px-12 py-6 rounded-full shadow-medium hover:shadow-strong transition-all duration-300 hover:scale-105 disabled:opacity-50"
-                >
+                <Button type="submit" size="lg" disabled={isSubmitting} className="text-lg px-12 py-6 rounded-full shadow-medium hover:shadow-strong transition-all duration-300 hover:scale-105 disabled:opacity-50">
                   {isSubmitting ? "Sending..." : "Submit Request"}
                   <Send className="ml-2 w-5 h-5" />
                 </Button>
