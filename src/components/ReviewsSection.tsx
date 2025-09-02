@@ -64,15 +64,7 @@ const ReviewsSection = () => {
 
         {/* Reviews Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {reviews.map(review => <Card key={review.id} className="p-6 shadow-soft hover:shadow-medium transition-all duration-300">
-              <div className="flex items-center gap-2 mb-4">
-                {renderStars(review.rating)}
-              </div>
-              <div className="border-t pt-4">
-                <p className="font-semibold">{review.name}</p>
-                <p className="text-sm text-muted-foreground">{review.location}</p>
-              </div>
-            </Card>)}
+          {reviews.map(review => {})}
         </div>
 
         {/* Call to Action */}
