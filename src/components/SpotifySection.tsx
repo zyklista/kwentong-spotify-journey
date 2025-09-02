@@ -34,7 +34,22 @@ const SpotifySection = () => {
 
   useEffect(() => {
     fetchSpotifyEpisodes();
+    syncSpotifyContent();
   }, []);
+
+  const syncSpotifyContent = async () => {
+    try {
+      await supabase.functions.invoke('media-sync', {
+        body: { platform: 'spotify', force: false }
+      });
+      // Refetch episodes after sync
+      setTimeout(() => {
+        fetchSpotifyEpisodes();
+      }, 2000);
+    } catch (error) {
+      console.error('Error syncing Spotify content:', error);
+    }
+  };
 
   const fetchSpotifyEpisodes = async () => {
     try {
