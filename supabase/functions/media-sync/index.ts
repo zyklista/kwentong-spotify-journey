@@ -111,7 +111,7 @@ async function syncSpotifyEpisodes(supabase: any, force: boolean) {
           sync_status: 'in_progress',
           last_sync_at: new Date().toISOString()
         }
-      ]);
+      ], { onConflict: 'platform' });
 
     // Get Spotify access token
     const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
@@ -150,21 +150,20 @@ async function syncSpotifyEpisodes(supabase: any, force: boolean) {
     // Process each episode
     for (const episode of episodes) {
       const episodeData = {
-        spotify_id: episode.id,
+        episode_id: episode.id,
         title: episode.name,
         description: episode.description,
         duration_ms: episode.duration_ms,
         release_date: episode.release_date,
-        thumbnail_url: episode.images?.[0]?.url || null,
-        spotify_url: episode.external_urls.spotify,
-        external_urls: episode.external_urls
+        image_url: episode.images?.[0]?.url || null,
+        external_url: episode.external_urls.spotify
       };
 
       // Upsert episode data
       const { error } = await supabase
         .from('spotify_episodes')
         .upsert([episodeData], { 
-          onConflict: 'spotify_id',
+          onConflict: 'episode_id',
           ignoreDuplicates: !force 
         });
 
@@ -183,7 +182,7 @@ async function syncSpotifyEpisodes(supabase: any, force: boolean) {
           last_sync_at: new Date().toISOString(),
           error_message: null
         }
-      ]);
+      ], { onConflict: 'platform' });
 
     console.log('Spotify sync completed successfully');
 
@@ -200,7 +199,7 @@ async function syncSpotifyEpisodes(supabase: any, force: boolean) {
           last_sync_at: new Date().toISOString(),
           error_message: error.message
         }
-      ]);
+      ], { onConflict: 'platform' });
   }
 }
 
@@ -217,7 +216,7 @@ async function syncYouTubeVideos(supabase: any, force: boolean) {
           sync_status: 'in_progress',
           last_sync_at: new Date().toISOString()
         }
-      ]);
+      ], { onConflict: 'platform' });
 
     const apiKey = Deno.env.get('YOUTUBE_API_KEY');
 
@@ -251,13 +250,12 @@ async function syncYouTubeVideos(supabase: any, force: boolean) {
     // Process each video
     for (const video of videos) {
       const videoData = {
-        youtube_id: video.id,
+        video_id: video.id,
         title: video.snippet.title,
         description: video.snippet.description,
         duration: video.contentDetails.duration,
         published_at: video.snippet.publishedAt,
         thumbnail_url: video.snippet.thumbnails?.high?.url || null,
-        youtube_url: `https://www.youtube.com/watch?v=${video.id}`,
         view_count: parseInt(video.statistics?.viewCount || '0'),
         like_count: parseInt(video.statistics?.likeCount || '0')
       };
@@ -266,7 +264,7 @@ async function syncYouTubeVideos(supabase: any, force: boolean) {
       const { error } = await supabase
         .from('youtube_videos')
         .upsert([videoData], { 
-          onConflict: 'youtube_id',
+          onConflict: 'video_id',
           ignoreDuplicates: !force 
         });
 
@@ -285,7 +283,7 @@ async function syncYouTubeVideos(supabase: any, force: boolean) {
           last_sync_at: new Date().toISOString(),
           error_message: null
         }
-      ]);
+      ], { onConflict: 'platform' });
 
     console.log('YouTube sync completed successfully');
 
@@ -302,7 +300,7 @@ async function syncYouTubeVideos(supabase: any, force: boolean) {
           last_sync_at: new Date().toISOString(),
           error_message: error.message
         }
-      ]);
+      ], { onConflict: 'platform' });
   }
 }
 
