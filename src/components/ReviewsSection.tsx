@@ -1,92 +1,80 @@
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 const ReviewsSection = () => {
+  const isMobile = useIsMobile();
+  
+  // Keep only the ratings data without review text
   const reviews = [{
     id: 1,
     name: "Maria Santos",
     rating: 5,
-    review: "The guidance I received helped me navigate my career transition successfully. Highly recommend their services!",
     location: "Dubai, UAE"
   }, {
     id: 2,
     name: "Juan dela Cruz",
     rating: 5,
-    review: "Amazing support and resources for OFWs. The team really understands what we go through.",
     location: "Singapore"
   }, {
     id: 3,
     name: "Anna Rodriguez",
     rating: 4,
-    review: "Great content and advice. The podcast episodes are particularly helpful for mental health support.",
     location: "Hong Kong"
   }, {
     id: 4,
     name: "Carlos Mendoza",
     rating: 5,
-    review: "Excellent service! They helped me with legal documentation and career planning. Very professional.",
     location: "Saudi Arabia"
   }, {
     id: 5,
     name: "Sofia Garcia",
     rating: 5,
-    review: "The financial planning advice saved me thousands. Worth every penny of their consultation fee.",
     location: "Canada"
   }, {
     id: 6,
     name: "Rico Fernandez",
     rating: 4,
-    review: "Good resources for entrepreneurship. Helped me start my own business while working abroad.",
     location: "Australia"
   }];
+  
   const renderStars = (rating: number) => {
     return Array.from({
       length: 5
-    }, (_, index) => <Star key={index} className={`w-4 h-4 ${index < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />);
+    }, (_, index) => <Star key={index} className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${index < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />);
   };
+  
   const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
-  return <section className="py-20 bg-gradient-to-b from-background to-secondary/5">
+  
+  return <section className={`bg-gradient-to-b from-background to-secondary/5 ${isMobile ? 'py-12' : 'py-20'}`}>
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Star className="w-4 h-4" />
+        <div className={`text-center ${isMobile ? 'mb-8' : 'mb-16'}`}>
+          <div className={`inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full font-medium mb-4 ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}>
+            <Star className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             Client Reviews
           </div>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            {renderStars(Math.round(averageRating))}
-            <span className="text-xl font-semibold ml-2">{averageRating.toFixed(1)}</span>
-            <span className="text-muted-foreground">({reviews.length} reviews)</span>
+          <div className={`flex items-center justify-center gap-2 mb-4 ${isMobile ? 'flex-col' : ''}`}>
+            <div className="flex gap-1">
+              {renderStars(Math.round(averageRating))}
+            </div>
+            <div className={`flex items-center gap-2 ${isMobile ? 'mt-2' : 'ml-2'}`}>
+              <span className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>{averageRating.toFixed(1)}</span>
+              <span className="text-muted-foreground">({reviews.length} reviews)</span>
+            </div>
           </div>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'}`}>
             Trusted by OFWs worldwide for guidance, support, and professional services.
           </p>
         </div>
 
-        {/* Reviews Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {reviews.map(review => (
-            <Card key={review.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="font-semibold text-base">{review.name}</h4>
-                  <p className="text-sm text-muted-foreground">{review.location}</p>
-                </div>
-                <div className="flex gap-1">
-                  {renderStars(review.rating)}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
         {/* Call to Action */}
-        <div className="text-center mt-12">
-          <p className="text-lg text-muted-foreground mb-4">
+        <div className={`text-center ${isMobile ? 'mt-8' : 'mt-12'}`}>
+          <p className={`text-muted-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
             Ready to join our satisfied clients?
           </p>
-          <a href="#contact" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors">
+          <a href="#contact" className={`inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-colors ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'}`}>
             Get Started Today
-            <Star className="w-4 h-4" />
+            <Star className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
           </a>
         </div>
       </div>
