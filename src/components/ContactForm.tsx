@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Send, User, Mail, Phone, Briefcase, Facebook, Instagram, Youtube } from "lucide-react";
+import { MessageCircle, Send, User, Mail, Phone, Briefcase, Facebook, Instagram, Youtube, Settings } from "lucide-react";
 import { FaTiktok } from "react-icons/fa";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,8 @@ const ContactForm = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [makeWebhookUrl, setMakeWebhookUrl] = useState("");
+  const [showWebhookConfig, setShowWebhookConfig] = useState(false);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const {
       name,
@@ -39,19 +41,19 @@ const ContactForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Insert directly into contact_submissions table
-      const {
-        error
-      } = await supabase.from('contact_submissions').insert([{
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || null,
-        service: formData.service || null,
-        message: formData.message
-      }]);
+      // Use the new form integrations function
+      const { error } = await supabase.functions.invoke('form-integrations', {
+        body: {
+          type: 'contact',
+          data: formData,
+          makeWebhookUrl: makeWebhookUrl || undefined
+        }
+      });
+
       if (error) {
         throw error;
       }
+
       toast({
         title: "Message sent successfully!",
         description: "Thank you for contacting us. We'll get back to you soon."
@@ -91,7 +93,33 @@ const ContactForm = () => {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <Card className="p-8 shadow-soft">
+          <Card className="p-8 shadow-soft relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowWebhookConfig(!showWebhookConfig)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              title="Configure Make.com webhook"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+
+            {showWebhookConfig && (
+              <div className="mb-6 p-4 bg-secondary/20 rounded-lg">
+                <label className="text-sm font-medium mb-2 block">Make.com Webhook URL (Optional)</label>
+                <Input
+                  type="url"
+                  placeholder="https://hook.make.com/..."
+                  value={makeWebhookUrl}
+                  onChange={(e) => setMakeWebhookUrl(e.target.value)}
+                  className="text-sm"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your Make.com webhook URL to trigger automation when someone submits a contact form.
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">

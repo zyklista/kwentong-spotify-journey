@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
+import { X, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const EbookPopup = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [makeWebhookUrl, setMakeWebhookUrl] = useState("");
+  const [showWebhookConfig, setShowWebhookConfig] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -24,18 +28,26 @@ const EbookPopup = () => {
       try {
         console.log('Submitting ebook form:', { email, name });
         
-        // Insert directly into Supabase
-        const { data, error } = await supabase
-          .from("ebook_signups")
-          .insert([{ email, name }]);
+        // Use the new form integrations function
+        const { error } = await supabase.functions.invoke('form-integrations', {
+          body: {
+            type: 'ebook',
+            data: { email, name },
+            makeWebhookUrl: makeWebhookUrl || undefined
+          }
+        });
 
         if (error) {
-          console.error('Supabase error:', error.message);
-          alert("❌ " + error.message);
+          console.error('Integration error:', error.message);
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive"
+          });
           return;
         }
 
-        console.log('Ebook form success:', data);
+        console.log('Ebook form success with integrations');
         setIsSuccess(true);
         setTimeout(() => {
           setIsVisible(false);
@@ -43,7 +55,11 @@ const EbookPopup = () => {
         
       } catch (error) {
         console.error('Error submitting ebook form:', error);
-        alert("❌ Error submitting form");
+        toast({
+          title: "Error",
+          description: "Error submitting form. Please try again.",
+          variant: "destructive"
+        });
       }
     }
   };
@@ -77,14 +93,25 @@ const EbookPopup = () => {
 
           {/* Right Side - Form */}
           <div className="flex-1 p-8 relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowWebhookConfig(!showWebhookConfig)}
+                className="text-muted-foreground hover:text-foreground"
+                title="Configure Make.com webhook"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleClose}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
 
             {!isSuccess ? (
               <div className="max-w-md mx-auto">
@@ -94,6 +121,22 @@ const EbookPopup = () => {
                 <p className="text-muted-foreground mb-6 text-center">
                   Discover real insights and practical advice for OFWs. No spam, just valuable content delivered directly to you.
                 </p>
+
+                {showWebhookConfig && (
+                  <div className="mb-4 p-4 bg-secondary/20 rounded-lg">
+                    <label className="text-sm font-medium mb-2 block">Make.com Webhook URL (Optional)</label>
+                    <Input
+                      type="url"
+                      placeholder="https://hook.make.com/..."
+                      value={makeWebhookUrl}
+                      onChange={(e) => setMakeWebhookUrl(e.target.value)}
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter your Make.com webhook URL to trigger automation when someone signs up for the ebook.
+                    </p>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
