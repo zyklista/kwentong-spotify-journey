@@ -194,6 +194,42 @@ export type Database = {
         }
         Relationships: []
       }
+      spotify_tracks: {
+        Row: {
+          added_at: string | null
+          album: string | null
+          artists: string[] | null
+          duration_ms: number | null
+          external_url: string | null
+          id: number
+          name: string
+          preview_url: string | null
+          track_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          album?: string | null
+          artists?: string[] | null
+          duration_ms?: number | null
+          external_url?: string | null
+          id?: never
+          name: string
+          preview_url?: string | null
+          track_id: string
+        }
+        Update: {
+          added_at?: string | null
+          album?: string | null
+          artists?: string[] | null
+          duration_ms?: number | null
+          external_url?: string | null
+          id?: never
+          name?: string
+          preview_url?: string | null
+          track_id?: string
+        }
+        Relationships: []
+      }
       visitors: {
         Row: {
           created_at: string
