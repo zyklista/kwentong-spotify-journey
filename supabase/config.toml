@@ -1,1 +1,4 @@
 project_id = "vadhwoknebojprawjwmy"
+
+[functions.form-integrations]
+verify_jwt = false
