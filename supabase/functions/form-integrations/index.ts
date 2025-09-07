@@ -76,6 +76,32 @@ const handler = async (req: Request): Promise<Response> => {
       await integrateMakeCom(makeWebhookUrl, type, data);
     }
 
+    // Send automated email response
+    try {
+      let emailFunctionName = '';
+      if (type === 'ebook') {
+        emailFunctionName = 'send-ebook-email';
+      } else if (type === 'contact') {
+        emailFunctionName = 'send-contact-email';
+      }
+
+      if (emailFunctionName) {
+        const { error: emailError } = await supabase.functions.invoke(emailFunctionName, {
+          body: data
+        });
+        
+        if (emailError) {
+          console.error('Email sending error:', emailError);
+          // Don't fail the main process if email fails
+        } else {
+          console.log('Automated email sent successfully');
+        }
+      }
+    } catch (emailError) {
+      console.error('Email function error:', emailError);
+      // Continue with success response even if email fails
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
