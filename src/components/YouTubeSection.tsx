@@ -85,7 +85,8 @@ const YouTubeSection = () => {
   // Featured video (can be hardcoded until database is populated)
   const defaultFeaturedVideo = {
     id: "featured-1",
-    video_id: "dQw4w9WgXcQ", // Replace with actual video ID
+    video_id: "dQw4w9WgXcQ",
+    // Replace with actual video ID
     title: "Latest OFW Success Story - From Dubai to Dream Career",
     description: "Watch how Maria transformed her career abroad with our guidance and support.",
     thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
@@ -93,11 +94,8 @@ const YouTubeSection = () => {
     view_count: 15000,
     published_at: new Date().toISOString()
   };
-
   const displayFeaturedVideo = featuredVideo || defaultFeaturedVideo;
-
-  return (
-    <section className="py-24 px-4 bg-gradient-to-br from-background via-background/50 to-primary/5">
+  return <section className="py-24 px-4 bg-gradient-to-br from-background via-background/50 to-primary/5">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
@@ -116,86 +114,27 @@ const YouTubeSection = () => {
           <Card className="overflow-hidden shadow-elegant hover:shadow-glow transition-all duration-500 bg-gradient-to-br from-card to-card/50 border-primary/20">
             <div className="grid lg:grid-cols-2 gap-0">
               {/* Video Thumbnail */}
-              <div className="relative group">
-                <img 
-                  src={displayFeaturedVideo.thumbnail_url || "/placeholder.svg"} 
-                  alt={displayFeaturedVideo.title}
-                  className="w-full h-64 lg:h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                  <Button
-                    size="lg"
-                    className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-6 transform group-hover:scale-110 transition-all duration-300"
-                    onClick={() => window.open(`https://www.youtube.com/watch?v=${displayFeaturedVideo.video_id}`, '_blank')}
-                  >
-                    <Play className="w-8 h-8" />
-                  </Button>
-                </div>
-                {displayFeaturedVideo.duration && (
-                  <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDuration(displayFeaturedVideo.duration)}
-                  </div>
-                )}
-              </div>
+              
 
               {/* Video Info */}
-              <div className="p-8">
-                <div className="mb-4">
-                  <span className="inline-flex items-center gap-1 text-sm text-primary font-medium">
-                    <Calendar className="w-4 h-4" />
-                    {formatPublishedDate(displayFeaturedVideo.published_at)}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold mb-4 leading-tight">
-                  {displayFeaturedVideo.title}
-                </h3>
-                {displayFeaturedVideo.description && (
-                  <p className="text-muted-foreground mb-6 leading-relaxed">
-                    {displayFeaturedVideo.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
-                  <span>{formatViewCount(displayFeaturedVideo.view_count)}</span>
-                </div>
-                <Button 
-                  size="lg"
-                  onClick={() => window.open(`https://www.youtube.com/watch?v=${displayFeaturedVideo.video_id}`, '_blank')}
-                  className="w-full lg:w-auto"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Watch Now
-                </Button>
-              </div>
+              
             </div>
           </Card>
         </div>
 
         {/* Other Videos Grid */}
-        {otherVideos.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {otherVideos.map((video) => (
-              <Card key={video.id} className="overflow-hidden shadow-soft hover:shadow-medium transition-all duration-300 group">
+        {otherVideos.length > 0 && <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {otherVideos.map(video => <Card key={video.id} className="overflow-hidden shadow-soft hover:shadow-medium transition-all duration-300 group">
                 <div className="relative">
-                  <img 
-                    src={video.thumbnail_url || "/placeholder.svg"} 
-                    alt={video.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  <img src={video.thumbnail_url || "/placeholder.svg"} alt={video.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Button
-                      size="sm"
-                      className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-3"
-                      onClick={() => window.open(`https://www.youtube.com/watch?v=${video.video_id}`, '_blank')}
-                    >
+                    <Button size="sm" className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-3" onClick={() => window.open(`https://www.youtube.com/watch?v=${video.video_id}`, '_blank')}>
                       <Play className="w-4 h-4" />
                     </Button>
                   </div>
-                  {video.duration && (
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                  {video.duration && <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
                       {formatDuration(video.duration)}
-                    </div>
-                  )}
+                    </div>}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold mb-2 line-clamp-2 leading-tight">
@@ -206,26 +145,12 @@ const YouTubeSection = () => {
                     <span>{formatPublishedDate(video.published_at)}</span>
                   </div>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
 
         {/* Watch on YouTube Button */}
-        <div className="text-center">
-          <Button 
-            size="lg" 
-            variant="outline"
-            onClick={() => window.open('https://youtube.com/@YourChannelName', '_blank')}
-            className="border-primary/20 hover:bg-primary/10"
-          >
-            <Youtube className="w-5 h-5 mr-2" />
-            Watch on YouTube
-            <ExternalLink className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
+        
       </div>
-    </section>
-  );
+    </section>;
 };
 export default YouTubeSection;
