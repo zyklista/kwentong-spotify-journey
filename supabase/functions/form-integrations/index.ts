@@ -71,9 +71,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Integrate with Sender.net
     await integrateSenderNet(type, data);
 
-    // Integrate with Make.com if webhook URL provided
-    if (makeWebhookUrl) {
-      await integrateMakeCom(makeWebhookUrl, type, data);
+    // Integrate with Make.com - check both provided URL and environment variable
+    const envMakeWebhookUrl = Deno.env.get('MAKE_WEBHOOK_URL');
+    if (makeWebhookUrl || envMakeWebhookUrl) {
+      await integrateMakeCom(makeWebhookUrl || envMakeWebhookUrl!, type, data);
     }
 
     // Send automated email response
