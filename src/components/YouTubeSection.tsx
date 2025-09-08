@@ -95,62 +95,6 @@ const YouTubeSection = () => {
     published_at: new Date().toISOString()
   };
   const displayFeaturedVideo = featuredVideo || defaultFeaturedVideo;
-  return <section className="py-24 px-4 bg-gradient-to-br from-background via-background/50 to-primary/5">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Youtube className="w-4 h-4" />
-            Latest Videos
-          </div>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">Latest YouTube Videos</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Stay updated with our latest insights, success stories, and expert advice for OFWs worldwide.
-          </p>
-        </div>
-
-        {/* Featured Video */}
-        <div className="mb-12">
-          <Card className="overflow-hidden shadow-elegant hover:shadow-glow transition-all duration-500 bg-gradient-to-br from-card to-card/50 border-primary/20">
-            <div className="grid lg:grid-cols-2 gap-0">
-              {/* Video Thumbnail */}
-              
-
-              {/* Video Info */}
-              
-            </div>
-          </Card>
-        </div>
-
-        {/* Other Videos Grid */}
-        {otherVideos.length > 0 && <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {otherVideos.map(video => <Card key={video.id} className="overflow-hidden shadow-soft hover:shadow-medium transition-all duration-300 group">
-                <div className="relative">
-                  <img src={video.thumbnail_url || "/placeholder.svg"} alt={video.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Button size="sm" className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-3" onClick={() => window.open(`https://www.youtube.com/watch?v=${video.video_id}`, '_blank')}>
-                      <Play className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  {video.duration && <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
-                      {formatDuration(video.duration)}
-                    </div>}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold mb-2 line-clamp-2 leading-tight">
-                    {video.title}
-                  </h3>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{formatViewCount(video.view_count)}</span>
-                    <span>{formatPublishedDate(video.published_at)}</span>
-                  </div>
-                </div>
-              </Card>)}
-          </div>}
-
-        {/* Watch on YouTube Button */}
-        
-      </div>
-    </section>;
+  return;
 };
 export default YouTubeSection;
