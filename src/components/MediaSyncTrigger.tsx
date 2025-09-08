@@ -33,7 +33,14 @@ const MediaSyncTrigger = () => {
       if (error) {
         console.error('Error fetching sync statuses:', error);
       } else {
-        setSyncStatuses((data || []) as SyncStatus[]);
+        // Map database columns to interface properties
+        const mappedData: SyncStatus[] = (data || []).map(item => ({
+          platform: item.platform,
+          sync_status: item.status as 'pending' | 'in_progress' | 'completed' | 'failed',
+          last_sync_at: item.last_sync,
+          error_message: item.error_message
+        }));
+        setSyncStatuses(mappedData);
       }
     } catch (error) {
       console.error('Error fetching sync statuses:', error);

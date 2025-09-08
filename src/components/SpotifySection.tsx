@@ -62,7 +62,20 @@ const SpotifySection = () => {
       if (error) {
         console.error('Error fetching Spotify episodes:', error);
       } else if (data && data.length > 0) {
-        setEpisodes(data);
+        // Map database columns to interface properties
+        const mappedEpisodes: SpotifyEpisode[] = data.map(item => ({
+          id: item.id,
+          episode_id: item.episode_id,
+          title: item.name, // Map 'name' to 'title'
+          description: item.description,
+          duration_ms: item.duration_ms,
+          release_date: item.published_at, // Map 'published_at' to 'release_date'
+          image_url: item.image_url,
+          external_url: item.external_url,
+          created_at: item.created_at,
+          updated_at: item.updated_at
+        }));
+        setEpisodes(mappedEpisodes);
       }
     } catch (error) {
       console.error('Error fetching Spotify episodes:', error);
