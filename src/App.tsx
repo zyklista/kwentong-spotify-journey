@@ -28,6 +28,7 @@ import MiddleEastSuccessStories from "./pages/blog/MiddleEastSuccessStories";
 import EmergencyFund from "./pages/blog/EmergencyFund";
 import SeasonalWork from "./pages/blog/SeasonalWork";
 import FamilyDynamics from "./pages/blog/FamilyDynamics";
+import Survey from "./pages/Survey";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/connect" element={<Connect />} />
           <Route path="/contact" element={<ContactFormPage />} />
           <Route path="/ebook" element={<EbookSignupPage />} />
+          <Route path="/survey" element={<Survey />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

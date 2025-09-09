@@ -140,6 +140,33 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_responses: {
+        Row: {
+          created_at: string
+          email: string
+          feedback: string
+          id: string
+          name: string | null
+          rating: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          feedback: string
+          id?: string
+          name?: string | null
+          rating: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          feedback?: string
+          id?: string
+          name?: string | null
+          rating?: number
+        }
+        Relationships: []
+      }
       youtube_videos: {
         Row: {
           created_at: string
