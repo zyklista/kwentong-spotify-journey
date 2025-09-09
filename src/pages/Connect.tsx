@@ -24,8 +24,11 @@ const Connect = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.functions.invoke('send-contact-email', {
-        body: formData
+      const { error } = await supabase.functions.invoke('form-integrations', {
+        body: {
+          type: 'contact',
+          data: formData
+        }
       });
 
       if (error) throw error;
