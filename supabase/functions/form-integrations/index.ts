@@ -41,16 +41,28 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Store data in appropriate table
+    // Check for existing records to prevent duplicates
     let insertResult;
     if (type === 'ebook') {
-      insertResult = await supabase
+      // Check if email already exists
+      const { data: existingRecord } = await supabase
         .from('ebook_signups')
-        .insert([{
-          email: data.email,
-          name: data.name || null
-        }]);
+        .select('id')
+        .eq('email', data.email)
+        .single();
+
+      if (!existingRecord) {
+        insertResult = await supabase
+          .from('ebook_signups')
+          .insert([{
+            email: data.email,
+            name: data.name || null
+          }]);
+      } else {
+        console.log('Email already exists in ebook_signups, skipping database insert');
+      }
     } else if (type === 'contact') {
+      // Always insert contact submissions as they can be multiple inquiries from same person
       insertResult = await supabase
         .from('contact_submissions')
         .insert([{
@@ -67,6 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('Data stored successfully in database');
+
+    // Integrate with Brevo
+    await integrateBrevo(type, data);
 
     // Integrate with Sender.net
     await integrateSenderNet(type, data);
@@ -134,6 +149,53 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 };
+
+async function integrateBrevo(type: 'ebook' | 'contact', data: any) {
+  try {
+    const apiKey = Deno.env.get('BREVO_API_KEY');
+    if (!apiKey) {
+      console.warn('BREVO_API_KEY not configured');
+      return;
+    }
+
+    // Create contact payload for Brevo
+    const payload = {
+      email: data.email,
+      attributes: {
+        FIRSTNAME: data.name || '',
+        ...(type === 'contact' && {
+          PHONE: data.phone || '',
+          SERVICE: data.service || '',
+          MESSAGE: data.message || ''
+        })
+      },
+      listIds: type === 'ebook' ? [1] : [2], // You can configure list IDs in Brevo
+      updateEnabled: true // This prevents duplicates by updating existing contacts
+    };
+
+    console.log('Sending to Brevo:', payload);
+
+    const response = await fetch('https://api.brevo.com/v3/contacts', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Brevo API error:', response.status, errorText);
+    } else {
+      const result = await response.json();
+      console.log('Brevo integration successful:', result);
+    }
+
+  } catch (error) {
+    console.error('Error integrating with Brevo:', error);
+  }
+}
 
 async function integrateSenderNet(type: 'ebook' | 'contact', data: any) {
   try {
