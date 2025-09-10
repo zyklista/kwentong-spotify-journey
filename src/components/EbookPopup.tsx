@@ -32,17 +32,14 @@ const EbookPopup = () => {
           name
         });
 
-        // Use the new form integrations function
+        // Use the email signup edge function
         const {
           error
-        } = await supabase.functions.invoke('form-integrations', {
+        } = await supabase.functions.invoke('email-signup', {
           body: {
-            type: 'ebook',
-            data: {
-              email,
-              name
-            },
-            makeWebhookUrl: makeWebhookUrl || undefined
+            email,
+            name,
+            source: 'ebook_popup'
           }
         });
         if (error) {
