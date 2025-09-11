@@ -25,45 +25,57 @@ const EbookPopup = () => {
   }, []);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      try {
-        console.log('Submitting ebook form:', {
-          email,
-          name
-        });
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-        // Use the email signup edge function
-        const {
-          error
-        } = await supabase.functions.invoke('email-signup', {
-          body: {
-            email,
-            name,
-            source: 'ebook_popup'
-          }
-        });
-        if (error) {
-          console.error('Integration error:', error.message);
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive"
-          });
-          return;
+    try {
+      console.log('Submitting ebook form:', {
+        email: email.trim(),
+        name: name.trim()
+      });
+
+      // Use the email signup edge function
+      const { error } = await supabase.functions.invoke('email-signup', {
+        body: {
+          email: email.trim(),
+          name: name.trim() || null,
+          source: 'ebook_popup'
         }
-        console.log('Ebook form success with integrations');
-        setIsSuccess(true);
-        setTimeout(() => {
-          setIsVisible(false);
-        }, 3000);
-      } catch (error) {
-        console.error('Error submitting ebook form:', error);
+      });
+
+      if (error) {
+        console.error('Integration error:', error);
         toast({
           title: "Error",
-          description: "Error submitting form. Please try again.",
+          description: error.message || "Failed to submit form. Please try again.",
           variant: "destructive"
         });
+        return;
       }
+
+      console.log('Ebook form submitted successfully');
+      toast({
+        title: "Success!",
+        description: "Check your email for the download link."
+      });
+      
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+    } catch (error: any) {
+      console.error('Error submitting ebook form:', error);
+      toast({
+        title: "Error",
+        description: error?.message || "Network error. Please check your connection and try again.",
+        variant: "destructive"
+      });
     }
   };
   const handleClose = () => {

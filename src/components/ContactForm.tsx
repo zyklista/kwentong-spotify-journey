@@ -159,7 +159,7 @@ const ContactForm = () => {
                   <MessageCircle className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
                   Additional Details
                 </label>
-                <Input id="message" name="message" placeholder="Tell us more about your project or requirements..." value={formData.message} onChange={handleInputChange} required className={`${isMobile ? 'h-10 text-sm' : 'h-12'}`} />
+                <textarea id="message" name="message" placeholder="Tell us more about your project or requirements..." value={formData.message} onChange={handleInputChange} required className={`w-full min-h-[120px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y ${isMobile ? 'text-sm' : ''}`}></textarea>
               </div>
 
               <div className={`text-center ${isMobile ? 'pt-2' : 'pt-4'}`}>
