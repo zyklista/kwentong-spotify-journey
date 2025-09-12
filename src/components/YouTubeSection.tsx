@@ -62,7 +62,7 @@ interface YouTubeVideo {
 
 <script>
   // Replace with your deployed Supabase Edge Function URL
-  const EDGE_FUNCTION_URL = "https://YOUR-PROJECT-REF.functions.supabase.co/YOUR-FUNCTION-NAME";
+  const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
 
   async function loadYouTubeVideos() {
     try {
