@@ -16,85 +16,83 @@ interface YouTubeVideo {
   created_at: string;
   updated_at: string;
 }
-const YouTubeSection = () => {
-  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    fetchYouTubeVideos();
-  }, []);
-  const fetchYouTubeVideos = async () => {
-    try {
-      setLoading(true);
-      const {
-        data,
-        error
-      } = await supabase.from('youtube_videos').select('*').order('published_at', {
-        ascending: false
-      }).limit(6);
-      if (error) {
-        console.error('Error fetching YouTube videos:', error);
-        return;
-      }
-      setVideos(data as YouTubeVideo[]);
-    } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const formatDuration = (duration: string | null) => {
-    if (!duration) return '';
-    // Convert ISO 8601 duration to readable format
-    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return duration;
-    const hours = parseInt(match[1] || '0');
-    const minutes = parseInt(match[2] || '0');
-    const seconds = parseInt(match[3] || '0');
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-  const formatViewCount = (count: number | null) => {
-    if (!count) return '0 views';
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M views`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K views`;
-    return `${count} views`;
-  };
-  const formatPublishedDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
-  };
-  if (loading) {
-    return <section className="py-24 px-4 bg-gradient-to-br from-background via-background/50 to-primary/5">
-        <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6">Latest YouTube Videos</h2>
-          <p className="text-muted-foreground">Loading videos...</p>
-        </div>
-      </section>;
-  }
-  const featuredVideo = videos[0];
-  const otherVideos = videos.slice(1);
+<!-- === YouTube Section Start === -->
+<section id="youtube-section">
+  <h2>Latest Videos</h2>
+  <div id="youtube-videos" class="video-grid"></div>
+</section>
 
-  // Featured video (can be hardcoded until database is populated)
-  const defaultFeaturedVideo = {
-    id: "featured-1",
-    video_id: "dQw4w9WgXcQ",
-    // Replace with actual video ID
-    title: "Latest OFW Success Story - From Dubai to Dream Career",
-    description: "Watch how Maria transformed her career abroad with our guidance and support.",
-    thumbnail_url: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
-    duration: "PT12M34S",
-    view_count: 15000,
-    published_at: new Date().toISOString()
-  };
-  const displayFeaturedVideo = featuredVideo || defaultFeaturedVideo;
-  return;
-};
-export default YouTubeSection;
+<style>
+  /* YouTube Section Styling */
+  #youtube-section {
+    padding: 20px;
+    background: #f9f9f9;
+  }
+  #youtube-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .video-card {
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    transition: transform 0.2s ease;
+  }
+  .video-card:hover {
+    transform: scale(1.03);
+  }
+  .video-card img {
+    width: 100%;
+    display: block;
+  }
+  .video-card h3 {
+    font-size: 1rem;
+    padding: 10px;
+    line-height: 1.3;
+  }
+</style>
+
+<script>
+  // Replace with your deployed Supabase Edge Function URL
+  const EDGE_FUNCTION_URL = "https://YOUR-PROJECT-REF.functions.supabase.co/YOUR-FUNCTION-NAME";
+
+  async function loadYouTubeVideos() {
+    try {
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!res.ok) throw new Error("Failed to fetch videos");
+      const data = await res.json();
+
+      const container = document.getElementById("youtube-videos");
+      container.innerHTML = "";
+
+      (data.latest_videos || []).forEach(video => {
+        const card = document.createElement("a");
+        card.href = video.url;
+        card.target = "_blank";
+        card.className = "video-card";
+        card.innerHTML = `
+          <img src="${video.thumbnail_url}" alt="${video.title}">
+          <h3>${video.title}</h3>
+        `;
+        container.appendChild(card);
+      });
+    } catch (err) {
+      console.error("Error loading videos:", err);
+    }
+  }
+
+  // Load videos when the page is ready
+  document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
+</script>
+<!-- === YouTube Section End === -->
