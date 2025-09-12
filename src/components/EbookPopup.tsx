@@ -40,24 +40,32 @@ const EbookPopup = () => {
         name: name.trim()
       });
 
-      // Use the email signup edge function
-      const { error } = await supabase.functions.invoke('email-signup', {
-        body: {
-          email: email.trim(),
-          name: name.trim() || null,
-          source: 'ebook_popup'
-        }
-      });
+    // Integration with Supabase Edge Function for ebook signups
+const response = await fetch(
+  'https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/ebook_signups',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: email.trim(),
+      firstName: name.trim(),
+      listType: 'ebook',
+    }),
+  }
+);
 
-      if (error) {
-        console.error('Integration error:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to submit form. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
+if (!response.ok) {
+  const errorData = await response.json();
+  console.error('Integration error:', errorData);
+  toast({
+    title: "Error",
+    description: errorData?.message || "Failed to submit form. Please try again.",
+    variant: "destructive"
+  });
+  return;
+}
 
       console.log('Ebook form submitted successfully');
       toast({
