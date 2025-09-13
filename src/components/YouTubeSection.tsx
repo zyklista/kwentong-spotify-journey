@@ -81,10 +81,12 @@ interface YouTubeVideo {
         card.href = video.url;
         card.target = "_blank";
         card.className = "video-card";
-        card.innerHTML = `
-          <img src="${video.thumbnail_url}" alt="${video.title}">
-          <h3>${video.title}</h3>
-        `;
+     card.innerHTML = `
+        img src="${video.thumbnail_url}" alt="${video.title}">
+  <h3>${video.title}</h3>
+  <p>${video.description || ''}</p>
+  ${video.view_count ? `<div>Views: ${video.view_count}</div>` : ''}
+`;
         container.appendChild(card);
       });
     } catch (err) {
