@@ -62,6 +62,7 @@ interface YouTubeVideo {
 
 <script>
   // Replace with your deployed Supabase Edge Function URL
+<script>
   const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
 
   async function loadYouTubeVideos() {
@@ -76,23 +77,27 @@ interface YouTubeVideo {
       const container = document.getElementById("youtube-videos");
       container.innerHTML = "";
 
-      (data.latest_videos || []).forEach(video => {
+      // LIMIT TO FIRST 5 (change 5 to 3 for only 3 videos)
+      (data.latest_videos || []).slice(0, 5).forEach(video => {
         const card = document.createElement("a");
         card.href = video.url;
         card.target = "_blank";
         card.className = "video-card";
-     card.innerHTML = `
-        img src="${video.thumbnail_url}" alt="${video.title}">
-  <h3>${video.title}</h3>
-  <p>${video.description || ''}</p>
-  ${video.view_count ? `<div>Views: ${video.view_count}</div>` : ''}
-`;
+        card.innerHTML = `
+          <img src="${video.thumbnail_url}" alt="${video.title}">
+          <h3>${video.title}</h3>
+          <p>${video.description || ''}</p>
+          ${video.view_count ? `<div>Views: ${video.view_count}</div>` : ''}
+        `;
         container.appendChild(card);
       });
     } catch (err) {
       console.error("Error loading videos:", err);
     }
   }
+
+  document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
+</script>
 
   // Load videos when the page is ready
   document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
