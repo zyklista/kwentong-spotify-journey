@@ -23,14 +23,9 @@ interface YouTubeVideo {
 </section>
 
 <style>
-  /* YouTube Section Styling */
   #youtube-section {
     padding: 20px;
     background: #f9f9f9;
-  }
-  #youtube-section h2 {
-    font-size: 1.5rem;
-    margin-bottom: 16px;
   }
   .video-grid {
     display: grid;
@@ -45,6 +40,8 @@ interface YouTubeVideo {
     overflow: hidden;
     background: white;
     transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
   }
   .video-card:hover {
     transform: scale(1.03);
@@ -53,16 +50,31 @@ interface YouTubeVideo {
     width: 100%;
     display: block;
   }
-  .video-card h3 {
-    font-size: 1rem;
+  .video-info {
     padding: 10px;
-    line-height: 1.3;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .video-title {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+  }
+  .video-desc {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 8px;
+  }
+  .video-views {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: auto;
   }
 </style>
 
 <script>
   // Replace with your deployed Supabase Edge Function URL
-<script>
   const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
 
   async function loadYouTubeVideos() {
@@ -77,7 +89,7 @@ interface YouTubeVideo {
       const container = document.getElementById("youtube-videos");
       container.innerHTML = "";
 
-      // LIMIT TO FIRST 5 (change 5 to 3 for only 3 videos)
+      // Show only the latest 5 videos (or less if not enough)
       (data.latest_videos || []).slice(0, 5).forEach(video => {
         const card = document.createElement("a");
         card.href = video.url;
@@ -85,9 +97,11 @@ interface YouTubeVideo {
         card.className = "video-card";
         card.innerHTML = `
           <img src="${video.thumbnail_url}" alt="${video.title}">
-          <h3>${video.title}</h3>
-          <p>${video.description || ''}</p>
-          ${video.view_count ? `<div>Views: ${video.view_count}</div>` : ''}
+          <div class="video-info">
+            <div class="video-title">${video.title}</div>
+            <div class="video-desc">${video.description || ""}</div>
+            ${video.view_count ? `<div class="video-views">Views: ${video.view_count.toLocaleString()}</div>` : ""}
+          </div>
         `;
         container.appendChild(card);
       });
@@ -96,10 +110,6 @@ interface YouTubeVideo {
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
-</script>
-
-  // Load videos when the page is ready
   document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
 </script>
 <!-- === YouTube Section End === -->
