@@ -1,115 +1,51 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Play, ExternalLink, Youtube, Clock, Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useEffect, useState } from "react";
+
 interface YouTubeVideo {
-  id: string;
   video_id: string;
   title: string;
-  description: string | null;
-  thumbnail_url: string | null;
-  duration: string | null;
-  view_count: number | null;
-  like_count: number | null;
+  description: string;
+  thumbnail_url: string;
   published_at: string;
-  created_at: string;
-  updated_at: string;
+  url: string;
+  view_count: number | null;
 }
-<!-- === YouTube Section Start === -->
-<section id="youtube-section">
-  <h2>Latest Videos</h2>
-  <div id="youtube-videos" class="video-grid"></div>
-</section>
 
-<style>
-  #youtube-section {
-    padding: 20px;
-    background: #f9f9f9;
-  }
-  .video-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-  }
-  .video-card {
-    text-decoration: none;
-    color: inherit;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    background: white;
-    transition: transform 0.2s ease;
-    display: flex;
-    flex-direction: column;
-  }
-  .video-card:hover {
-    transform: scale(1.03);
-  }
-  .video-card img {
-    width: 100%;
-    display: block;
-  }
-  .video-info {
-    padding: 10px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  .video-title {
-    font-size: 1rem;
-    font-weight: bold;
-    margin: 0 0 8px 0;
-  }
-  .video-desc {
-    font-size: 0.95rem;
-    color: #555;
-    margin-bottom: 8px;
-  }
-  .video-views {
-    font-size: 0.85rem;
-    color: #888;
-    margin-top: auto;
-  }
-</style>
+const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
 
-<script>
-  // Replace with your deployed Supabase Edge Function URL
-  const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
+const YouTubeSection: React.FC = () => {
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
 
-  async function loadYouTubeVideos() {
-    try {
-      const res = await fetch(EDGE_FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (!res.ok) throw new Error("Failed to fetch videos");
+  useEffect(() => {
+    async function fetchVideos() {
+      const res = await fetch(EDGE_FUNCTION_URL, { method: "POST", headers: { "Content-Type": "application/json" } });
       const data = await res.json();
-
-      const container = document.getElementById("youtube-videos");
-      container.innerHTML = "";
-
-      // Show only the latest 5 videos (or less if not enough)
-      (data.latest_videos || []).slice(0, 5).forEach(video => {
-        const card = document.createElement("a");
-        card.href = video.url;
-        card.target = "_blank";
-        card.className = "video-card";
-        card.innerHTML = `
-          <img src="${video.thumbnail_url}" alt="${video.title}">
-          <div class="video-info">
-            <div class="video-title">${video.title}</div>
-            <div class="video-desc">${video.description || ""}</div>
-            ${video.view_count ? `<div class="video-views">Views: ${video.view_count.toLocaleString()}</div>` : ""}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    } catch (err) {
-      console.error("Error loading videos:", err);
+      setVideos(data.latest_videos || []);
     }
-  }
+    fetchVideos();
+  }, []);
 
-  document.addEventListener("DOMContentLoaded", loadYouTubeVideos);
-</script>
-<!-- === YouTube Section End === -->
+  return (
+    <section id="youtube-section" style={{ padding: 20, background: "#f9f9f9" }}>
+      <h2>Latest Videos</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 16 }}>
+        {videos.map(video => (
+          <a key={video.video_id} href={video.url} target="_blank" rel="noopener noreferrer"
+            style={{
+              textDecoration: "none", color: "inherit", border: "1px solid #ddd", borderRadius: 8,
+              overflow: "hidden", background: "white", transition: "transform 0.2s", display: "flex", flexDirection: "column"
+            }}>
+            <img src={video.thumbnail_url} alt={video.title} style={{ width: "100%", display: "block" }} />
+            <div style={{ padding: 10 }}>
+              <div style={{ fontWeight: "bold", fontSize: "1rem", marginBottom: 8 }}>{video.title}</div>
+              <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: 8 }}>{video.description}</div>
+              <div style={{ fontSize: "0.85rem", color: "#888" }}>{video.published_at}</div>
+              {video.view_count && <div style={{ fontSize: "0.85rem", color: "#888" }}>Views: {video.view_count}</div>}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+export default YouTubeSection;
