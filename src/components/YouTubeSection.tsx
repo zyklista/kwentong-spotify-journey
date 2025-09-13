@@ -7,10 +7,9 @@ interface YouTubeVideo {
   thumbnail_url: string;
   published_at: string;
   url: string;
-  view_count: number | null;
 }
 
-const EDGE_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/YouTube_rss";
+const EDGE_FUNCTION_URL = "https://your-project.supabase.co/functions/v1/youtube_latest_videos";
 
 const YouTubeSection: React.FC = () => {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
@@ -39,7 +38,6 @@ const YouTubeSection: React.FC = () => {
               <div style={{ fontWeight: "bold", fontSize: "1rem", marginBottom: 8 }}>{video.title}</div>
               <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: 8 }}>{video.description}</div>
               <div style={{ fontSize: "0.85rem", color: "#888" }}>{video.published_at}</div>
-              {video.view_count && <div style={{ fontSize: "0.85rem", color: "#888" }}>Views: {video.view_count}</div>}
             </div>
           </a>
         ))}
