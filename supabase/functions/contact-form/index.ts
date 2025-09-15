@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Store contact submission
     const { error: contactError } = await supabase
-      .from('contact_submissions')
+      .from('contact_submissions_relaxed')
       .insert([
         {
           name,
@@ -58,6 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
           phone: phone || null,
           service: service || null,
           message
+          others
         }
       ]);
 
