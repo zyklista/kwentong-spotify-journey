@@ -1,54 +1,21 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Calendar, Clock, ExternalLink, Youtube, Facebook, Instagram } from "lucide-react";
-import { FaTiktok } from "react-icons/fa";
+import { Play, Calendar, Clock, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import podcastMic from "@/assets/3d-podcast-mic.jpg";
-import geometricBg from "@/assets/3d-geometric-bg.jpg";
+
 const MediaSection = () => {
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
   const [latestVideo, setLatestVideo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [spotifyEpisodes, setSpotifyEpisodes] = useState<any[]>([]);
+  const [loadingYT, setLoadingYT] = useState(true);
+  const [loadingSpotify, setLoadingSpotify] = useState(true);
 
-  const episodes = [{
-    id: 1,
-    title: "Journey to Success: From OFW to Entrepreneur",
-    description: "A heartfelt conversation about building a business while working abroad and supporting family back home.",
-    duration: "45 min",
-    date: "Dec 15, 2024",
-    thumbnail: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=300&fit=crop",
-    spotifyUrl: "https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty"
-  }, {
-    id: 2,
-    title: "Mental Health Abroad: Staying Strong",
-    description: "Important discussion about maintaining mental wellness while being away from loved ones.",
-    duration: "38 min",
-    date: "Dec 8, 2024",
-    thumbnail: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop",
-    spotifyUrl: "https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty"
-  }, {
-    id: 3,
-    title: "Family Bonds: Keeping Close Despite Distance",
-    description: "Touching stories about maintaining family relationships across continents and time zones.",
-    duration: "52 min",
-    date: "Dec 1, 2024",
-    thumbnail: "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=400&h=300&fit=crop",
-    spotifyUrl: "https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty"
-  }, {
-    id: 4,
-    title: "Career Growth: Building Skills Overseas",
-    description: "How OFWs develop professionally while working in foreign countries and cultures.",
-    duration: "41 min",
-    date: "Nov 24, 2024",
-    thumbnail: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop",
-    spotifyUrl: "https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty"
-  }];
-
+  // Fetch YouTube videos from your Supabase table
   useEffect(() => {
     fetchYouTubeVideos();
-    // Trigger sync to get latest videos from YouTube
-    triggerYouTubeSync();
+    fetchSpotifyEpisodes();
+    triggerMediaSync();
   }, []);
 
   const fetchYouTubeVideos = async () => {
@@ -63,43 +30,74 @@ const MediaSection = () => {
         console.error('Error fetching YouTube videos:', error);
         return;
       }
-
-      if (data && data.length > 0) {
-        setYoutubeVideos(data);
-        setLatestVideo(data[0]);
-      }
+      setYoutubeVideos(data || []);
+      setLatestVideo(data?.[0] || null);
     } catch (error) {
       console.error('Error fetching YouTube videos:', error);
     } finally {
-      setLoading(false);
+      setLoadingYT(false);
     }
   };
 
-  const triggerYouTubeSync = async () => {
+  // Fetch Spotify episodes from your Supabase table
+  const fetchSpotifyEpisodes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('spotify_episodes')
+        .select('*')
+        .order('published_at', { ascending: false })
+        .limit(4);
+
+      if (error) {
+        console.error('Error fetching Spotify episodes:', error);
+        return;
+      }
+      setSpotifyEpisodes(data || []);
+    } catch (error) {
+      console.error('Error fetching Spotify episodes:', error);
+    } finally {
+      setLoadingSpotify(false);
+    }
+  };
+
+  // Trigger sync for both platforms
+  const triggerMediaSync = async () => {
     try {
       await supabase.functions.invoke('media-sync', {
         body: { platform: 'youtube', force: false }
       });
+      await supabase.functions.invoke('media-sync', {
+        body: { platform: 'spotify', force: false }
+      });
     } catch (error) {
-      console.error('Error triggering YouTube sync:', error);
+      console.error('Error triggering media sync:', error);
     }
   };
 
   const formatDuration = (duration: string) => {
     if (!duration) return '';
-    // Convert ISO 8601 duration (PT1H2M30S) to readable format
-    const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!match) return duration;
-    
-    const hours = parseInt(match[1]) || 0;
-    const minutes = parseInt(match[2]) || 0;
-    const seconds = parseInt(match[3]) || 0;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    } else {
+    // Convert milliseconds (Spotify) or ISO 8601 (YouTube) to readable format
+    if (/^PT/.test(duration)) {
+      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (!match) return duration;
+      const hours = parseInt(match[1]) || 0;
+      const minutes = parseInt(match[2]) || 0;
+      const seconds = parseInt(match[3]) || 0;
+      if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }
+    // If it's ms (Spotify)
+    const ms = parseInt(duration);
+    if (!isNaN(ms)) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
+    return duration;
   };
 
   const formatDate = (dateString: string) => {
@@ -110,13 +108,15 @@ const MediaSection = () => {
       day: 'numeric'
     });
   };
-  return <section className="py-20 relative overflow-hidden">
+
+  return (
+    <section className="py-20 relative overflow-hidden">
       {/* Animated Art Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_hsl(var(--primary))_0%,_transparent_50%)] opacity-5 animate-pulse"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,_hsl(var(--accent))_0%,_transparent_50%)] opacity-5 animate-pulse" style={{
-        animationDelay: '1s'
-      }}></div>
+          animationDelay: '1s'
+        }}></div>
         <div className="absolute inset-0 bg-[linear-gradient(45deg,_transparent_30%,_hsl(var(--secondary))_50%,_transparent_70%)] opacity-3"></div>
       </div>
 
@@ -142,23 +142,22 @@ const MediaSection = () => {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
               Watch our newest video content featuring inspiring OFW stories and interviews.
             </p>
-            
-            {loading ? (
+            {loadingYT ? (
               <div className="flex justify-center mb-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : latestVideo ? (
               <Card className="max-w-2xl mx-auto mb-8 overflow-hidden hover:shadow-xl transition-all duration-300">
                 <div className="relative">
-                  <img 
-                    src={latestVideo.thumbnail_url} 
+                  <img
+                    src={latestVideo.thumbnail_url}
                     alt={latestVideo.title}
                     className="w-full h-64 object-cover"
                   />
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-all duration-300">
-                    <Button 
-                      onClick={() => window.open('https://youtu.be/7aJPN-GfivY?si=4BL5_pslsf01cPQz', '_blank')}
-                      size="lg" 
+                    <Button
+                      onClick={() => window.open(latestVideo.url, '_blank')}
+                      size="lg"
                       className="bg-red-500 hover:bg-red-600 text-white rounded-full p-4"
                     >
                       <Play className="w-8 h-8" />
@@ -183,8 +182,7 @@ const MediaSection = () => {
                 </CardContent>
               </Card>
             ) : null}
-            
-            <Button onClick={() => window.open('https://youtube.com/@diaryofanofw?si=81gLTL37rQQJdv_c', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
+            <Button onClick={() => window.open('https://youtube.com/@diaryofanofw', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-300 hover:scale-105 text-lg">
               <Youtube className="mr-2 w-6 h-6" />
               Watch on YouTube
             </Button>
@@ -199,36 +197,56 @@ const MediaSection = () => {
               Listen to our heartfelt conversations with OFWs sharing their incredible journeys, challenges, and triumphs.
             </p>
           </div>
-
+          {/* Dynamically loaded Spotify episodes */}
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="flex justify-center relative">
-              <div className="absolute -top-6 -left-6 w-24 h-24 opacity-30">
-                
+            {loadingSpotify ? (
+              <div className="flex justify-center mb-8 col-span-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
               </div>
-              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/How-to-apply-an-employee-card-e2nm042/a-abgfv4a" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
-            </div>
-            <div className="flex justify-center relative">
-              <div className="absolute -top-6 -right-6 w-24 h-24 opacity-30">
-                
+            ) : spotifyEpisodes.length > 0 ? (
+              spotifyEpisodes.map((episode) => (
+                <Card key={episode.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
+                  <div className="relative">
+                    <img
+                      src={episode.image_url}
+                      alt={episode.name}
+                      className="w-full h-52 object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-bold mb-2 line-clamp-2">{episode.name}</h3>
+                    <p className="text-muted-foreground mb-4 line-clamp-3">{episode.description}</p>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {formatDate(episode.published_at)}
+                      </div>
+                      {episode.duration_ms && (
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {formatDuration(episode.duration_ms.toString())}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => window.open(episode.external_url, '_blank')}
+                      size="sm"
+                      className="mt-4 px-5 py-2 rounded-full bg-green-500 hover:bg-green-600 text-white transition-all duration-300 hover:scale-105"
+                    >
+                      <Play className="mr-2 w-5 h-5" />
+                      Listen on Spotify
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-2 text-center text-muted-foreground">
+                No episodes available yet.
               </div>
-              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Tips-para-hindi-ka-mascam-sa-pag-aaply-e2nf4ca/a-abg8p43" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
-            </div>
-            <div className="flex justify-center relative">
-              <div className="absolute -bottom-6 -left-6 w-24 h-24 opacity-30">
-                
-              </div>
-              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Salary-reveal-sa-Czech-e2n8hb4/a-abfvdc3" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
-            </div>
-            <div className="flex justify-center relative">
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 opacity-30">
-                
-              </div>
-              <iframe src="https://creators.spotify.com/pod/profile/diaryofanofw/embed/episodes/Pwede-ba-magpart-time-sa-Czech-e2nj38u/a-abgcea1" height="150px" width="500px" frameBorder="0" scrolling="no" className="rounded-xl relative z-10 shadow-lg"></iframe>
-            </div>
+            )}
           </div>
 
           <div className="text-center mb-8">
-            
             <Button onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')} size="lg" className="px-8 py-6 rounded-full bg-green-500 hover:bg-green-600 text-white transition-all duration-300 hover:scale-105">
               <Play className="mr-2 w-5 h-5" />
               View All Episodes on Spotify
@@ -236,6 +254,8 @@ const MediaSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default MediaSection;
