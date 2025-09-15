@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Data shape for the request
 interface ContactFormRequest {
   name: string;
   email: string;
@@ -15,23 +16,28 @@ interface ContactFormRequest {
   others?: string;
 }
 
-const BREVO_API_KEY = Deno.env.get('BREVO_CONTACT_SUBMISSIONS_API'); // or your chosen env key
-
-const BREVO_LIST_IDS = {
-  web: Number(Deno.env.get('CONTACT_LISTS_ID_WEBDEV') || 10),
-  mobile: Number(Deno.env.get('CONTACT_LISTS_ID_MOBILEDEV') || 11),
-  ads: Number(Deno.env.get('CONTACT_LISTS_ID_ADS') || 12),
-  interview: Number(Deno.env.get('CONTACT_LISTS_ID_INTERV') || 13),
-  other: Number(Deno.env.get('BREVO_CONTACT_LIST_ID') || 9)
+// Service string to Brevo ENV key mapping
+const serviceListMap: Record<string, string> = {
+  'web development': 'CONTACT_LISTS_ID_WEBDEV',
+  'mobile app development': 'CONTACT_LISTS_ID_MOBILEDEV',
+  'advertising partnership': 'CONTACT_LISTS_ID_ADS',
+  'be our interview guest': 'CONTACT_LISTS_ID_INTERV',
+  'others': 'BREVO_CONTACT_LIST_ID',
 };
 
-function getBrevoListId(service: string) {
-  const s = (service || '').trim().toLowerCase();
-  if (s.includes('web')) return BREVO_LIST_IDS.web;
-  if (s.includes('mobile')) return BREVO_LIST_IDS.mobile;
-  if (s.includes('ads')) return BREVO_LIST_IDS.ads;
-  if (s.includes('interview')) return BREVO_LIST_IDS.interview;
-  return BREVO_LIST_IDS.other;
+function getListIdFromEnvKey(envKey: string | undefined) {
+  if (!envKey) return null;
+  const raw = Deno.env.get(envKey);
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) ? n : null;
+}
+
+function resolveBrevoListId(service?: string) {
+  if (!service) return getListIdFromEnvKey('BREVO_CONTACT_LIST_ID');
+  const normalized = service.trim().toLowerCase();
+  const envKey = serviceListMap[normalized] || 'BREVO_CONTACT_LIST_ID';
+  return getListIdFromEnvKey(envKey);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -40,31 +46,25 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { 
-      status: 405, 
-      headers: corsHeaders 
-    });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   try {
     const { name, email, phone, service, message, others }: ContactFormRequest = await req.json();
 
+    // Validate
     if (!name || !email || !message) {
       return new Response(
         JSON.stringify({ error: 'Name, email, and message are required' }),
-        { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Store contact submission in Supabase
+    // Write to contact_submissions_relaxed
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
     const { error: contactError } = await supabase
       .from('contact_submissions_relaxed')
       .insert([
@@ -77,59 +77,27 @@ const handler = async (req: Request): Promise<Response> => {
           others: others || null
         }
       ]);
-
     if (contactError) {
       console.error('Contact submission error:', contactError);
       return new Response(
         JSON.stringify({ error: 'Failed to submit contact form' }),
-        { 
-          status: 500, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Add to email list
-    const { error: emailListError } = await supabase
-      .from('email_list')
-      .insert([
-        {
-          email,
-          name,
-          source: 'contact_form',
-          subscribed: true
-        }
-      ]);
-    if (emailListError) {
-      console.error('Email list error:', emailListError);
-    }
-
-    // Add to visitor tracking
-    const { error: visitorError } = await supabase
-      .from('visitors')
-      .insert([
-        {
-          email,
-          name,
-          signup_source: 'contact_form',
-          user_agent: req.headers.get('user-agent') || null
-        }
-      ]);
-    if (visitorError) {
-      console.error('Visitor tracking error:', visitorError);
-    }
-
-    // Send to Brevo
-    if (BREVO_API_KEY) {
+    // Brevo integration
+    const brevoApiKey = Deno.env.get('BREVO_CONTACT_SUBMISSIONS_API');
+    const listId = resolveBrevoListId(service);
+    if (brevoApiKey && listId) {
       const brevoPayload = {
         email,
         attributes: {
-          FIRSTNAME: name ?? '',
-          PHONE: phone ?? '',
-          MESSAGE: message ?? '',
-          OTHERS: others ?? ''
+          FIRSTNAME: name,
+          PHONE: phone || "",
+          MESSAGE: message,
+          OTHERS: others || ""
         },
-        listIds: [getBrevoListId(service)],
+        listIds: [listId],
         updateEnabled: true
       };
 
@@ -139,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'api-key': BREVO_API_KEY
+            'api-key': brevoApiKey
           },
           body: JSON.stringify(brevoPayload)
         });
@@ -153,28 +121,19 @@ const handler = async (req: Request): Promise<Response> => {
         console.error('Brevo API error:', brevoError);
       }
     } else {
-      console.log('Brevo API key not found');
+      console.log('Brevo API key or listId not found');
     }
 
+    // Success
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Contact form submitted successfully!' 
-      }),
-      { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-      }
+      JSON.stringify({ success: true, message: 'Contact form submitted successfully!' }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
-
   } catch (error) {
     console.error('Error in contact-form function:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { 
-        status: 500, 
-        headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-      }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 };
