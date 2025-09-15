@@ -12,10 +12,29 @@ interface ContactFormRequest {
   phone?: string;
   service?: string;
   message: string;
+  others?: string;
+}
+
+const BREVO_API_KEY = Deno.env.get('BREVO_CONTACT_SUBMISSIONS_API'); // or your chosen env key
+
+const BREVO_LIST_IDS = {
+  web: Number(Deno.env.get('CONTACT_LISTS_ID_WEBDEV') || 10),
+  mobile: Number(Deno.env.get('CONTACT_LISTS_ID_MOBILEDEV') || 11),
+  ads: Number(Deno.env.get('CONTACT_LISTS_ID_ADS') || 12),
+  interview: Number(Deno.env.get('CONTACT_LISTS_ID_INTERV') || 13),
+  other: Number(Deno.env.get('BREVO_CONTACT_LIST_ID') || 9)
+};
+
+function getBrevoListId(service: string) {
+  const s = (service || '').trim().toLowerCase();
+  if (s.includes('web')) return BREVO_LIST_IDS.web;
+  if (s.includes('mobile')) return BREVO_LIST_IDS.mobile;
+  if (s.includes('ads')) return BREVO_LIST_IDS.ads;
+  if (s.includes('interview')) return BREVO_LIST_IDS.interview;
+  return BREVO_LIST_IDS.other;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { name, email, phone, service, message }: ContactFormRequest = await req.json();
+    const { name, email, phone, service, message, others }: ContactFormRequest = await req.json();
 
     if (!name || !email || !message) {
       return new Response(
@@ -40,15 +59,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Processing contact form:', { name, email, service });
-
-    // Initialize Supabase client
+    // Store contact submission in Supabase
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Store contact submission
     const { error: contactError } = await supabase
       .from('contact_submissions_relaxed')
       .insert([
@@ -57,8 +73,8 @@ const handler = async (req: Request): Promise<Response> => {
           email,
           phone: phone || null,
           service: service || null,
-          message
-          others
+          message,
+          others: others || null
         }
       ]);
 
@@ -84,7 +100,6 @@ const handler = async (req: Request): Promise<Response> => {
           subscribed: true
         }
       ]);
-
     if (emailListError) {
       console.error('Email list error:', emailListError);
     }
@@ -100,68 +115,45 @@ const handler = async (req: Request): Promise<Response> => {
           user_agent: req.headers.get('user-agent') || null
         }
       ]);
-
     if (visitorError) {
       console.error('Visitor tracking error:', visitorError);
     }
 
-    // Add to SENDER.NET
-    const senderNetApiKey = Deno.env.get('SENDER_NET_API_KEY');
-
-    console.log('SENDER.NET credentials check:', { 
-      hasApiKey: !!senderNetApiKey,
-      apiKeyPrefix: senderNetApiKey?.substring(0, 8) + '...'
-    });
-
-    if (senderNetApiKey) {
-      const senderNetUrl = 'https://api.sender.net/v2/subscribers';
-
-      // Map service values to acceptable options
-      const serviceMapping: { [key: string]: string } = {
-        'admin-tasks': 'Administrative Tasks',
-        'data-entry': 'Data Entry',
-        'customer-service': 'Customer Service',
-        'digital-marketing': 'Digital Marketing',
-        'content-creation': 'Content Creation',
-        'web-development': 'Website Development',
-        'other': 'Other Services'
-      };
-
-      const mappedService = service ? serviceMapping[service] || service : 'Contact Form';
-
-      const senderNetData = {
-        email: email,
-        firstname: name.split(' ')[0],
-        lastname: name.split(' ').slice(1).join(' '),
-        groups: [Deno.env.get('SENDER_NET_CONTACT_LIST_ID') || 'aMWLzR'], // Contact form list ID
-        fields: {
-          services: mappedService
-        }
+    // Send to Brevo
+    if (BREVO_API_KEY) {
+      const brevoPayload = {
+        email,
+        attributes: {
+          FIRSTNAME: name ?? '',
+          PHONE: phone ?? '',
+          MESSAGE: message ?? '',
+          OTHERS: others ?? ''
+        },
+        listIds: [getBrevoListId(service)],
+        updateEnabled: true
       };
 
       try {
-        const senderNetResponse = await fetch(senderNetUrl, {
+        const brevoResponse = await fetch('https://api.brevo.com/v3/contacts', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${senderNetApiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'api-key': BREVO_API_KEY
           },
-          body: JSON.stringify(senderNetData),
+          body: JSON.stringify(brevoPayload)
         });
-
-        const senderNetResult = await senderNetResponse.json();
-        
-        if (!senderNetResponse.ok) {
-          console.error('SENDER.NET error:', senderNetResult);
+        const brevoResult = await brevoResponse.json();
+        if (!brevoResponse.ok) {
+          console.error('Brevo error:', brevoResult);
         } else {
-          console.log('Successfully added to SENDER.NET:', senderNetResult);
+          console.log('Successfully added to Brevo:', brevoResult);
         }
-      } catch (senderNetError) {
-        console.error('SENDER.NET API error:', senderNetError);
+      } catch (brevoError) {
+        console.error('Brevo API error:', brevoError);
       }
     } else {
-      console.log('SENDER.NET API key not found');
+      console.log('Brevo API key not found');
     }
 
     return new Response(
