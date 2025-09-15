@@ -19,6 +19,7 @@ const ContactForm = () => {
     phone: '',
     service: '',
     message: ''
+    others: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [makeWebhookUrl, setMakeWebhookUrl] = useState("");
@@ -68,6 +69,7 @@ const ContactForm = () => {
         phone: '',
         service: '',
         message: ''
+        others: ''
       });
     } catch (error) {
       console.error('Error sending message:', error);
