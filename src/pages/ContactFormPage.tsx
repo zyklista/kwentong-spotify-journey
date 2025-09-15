@@ -1,13 +1,36 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
+import Header from "@/components/Header";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+
+const SERVICE_OPTIONS = [
+  { value: "", label: "Select a service" },
+  { value: "admin-tasks", label: "Administrative Tasks" },
+  { value: "data-entry", label: "Data Entry" },
+  { value: "customer-service", label: "Customer Service" },
+  { value: "digital-marketing", label: "Digital Marketing" },
+  { value: "content-creation", label: "Content Creation" },
+  { value: "web-development", label: "Website Development" },
+  { value: "other", label: "Other Services" },
+];
+
+const SERVICE_MAPPING: Record<string, string> = {
+  "admin-tasks": "Administrative Tasks",
+  "data-entry": "Data Entry",
+  "customer-service": "Customer Service",
+  "digital-marketing": "Digital Marketing",
+  "content-creation": "Content Creation",
+  "web-development": "Website Development",
+  "other": "Other Services",
+};
+
+const CONTACT_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/contact_submissions";
+const AUTH_BEARER = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc";
 
 const ContactFormPage = () => {
   const [formData, setFormData] = useState({
@@ -15,32 +38,57 @@ const ContactFormPage = () => {
     email: "",
     phone: "",
     service: "",
-    message: ""
+    message: "",
+    others: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Map service
+    const mappedService = SERVICE_MAPPING[formData.service] || formData.service || "Other Services";
+
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || null,
+      service: mappedService,
+      message: formData.message,
+      others: formData.others || null,
+    };
+
     try {
-      const response = await fetch('https://dvfdyckisluzgunpcsyi.supabase.co/functions/v1/contact-form', {
-        method: 'POST',
+      const response = await fetch(CONTACT_FUNCTION_URL, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "Authorization": AUTH_BEARER,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         toast.success("Thank you! We'll get back to you within 72 hours.");
-        setFormData({ name: "", email: "", phone: "", service: "", message: "" });
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          service: "",
+          message: "",
+          others: "",
+        });
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send message');
+        throw new Error(errorData.error || "Failed to send message");
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -56,7 +104,7 @@ const ContactFormPage = () => {
             <h1 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Contact Us
             </h1>
-            
+
             <div className="text-center mb-12">
               <p className="text-lg text-muted-foreground">
                 We'd love to hear from you. Send us a message and we'll respond as soon as possible.
@@ -79,7 +127,7 @@ const ContactFormPage = () => {
                         id="name"
                         type="text"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => handleChange("name", e.target.value)}
                         required
                       />
                     </div>
@@ -89,58 +137,65 @@ const ContactFormPage = () => {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => handleChange("email", e.target.value)}
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone (Optional)</Label>
+                    <Label htmlFor="phone">Mobile Number (Optional)</Label>
                     <Input
                       id="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                      placeholder="Enter your mobile number"
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="service">How can we help you? *</Label>
-                    <Select 
-                      value={formData.service} 
-                      onValueChange={(value) => setFormData({ ...formData, service: value })}
+                    <Select
+                      value={formData.service}
+                      onValueChange={(value) => handleChange("service", value)}
                       required
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a service" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="website-development">Website Development</SelectItem>
-                        <SelectItem value="mobile-development">Mobile App Development</SelectItem>
-                        <SelectItem value="website-renovation">Website Renovation/Redesign</SelectItem>
-                        <SelectItem value="advertising">Advertising Partnership</SelectItem>
-                        <SelectItem value="interview-guest">Be Our Interview Guest</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {SERVICE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message">Tell us more about your needs *</Label>
+                    <Label htmlFor="message">Your Message *</Label>
                     <Textarea
                       id="message"
-                      rows={5}
                       value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Please provide details about your project or how you'd like to collaborate with us..."
+                      onChange={(e) => handleChange("message", e.target.value)}
+                      rows={5}
                       required
                     />
                   </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <div className="space-y-2">
+                    <Label htmlFor="others">Other Details (Optional)</Label>
+                    <Textarea
+                      id="others"
+                      value={formData.others}
+                      onChange={(e) => handleChange("others", e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Sending..." : "Send Message"}
@@ -151,7 +206,6 @@ const ContactFormPage = () => {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };
