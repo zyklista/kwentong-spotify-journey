@@ -7,7 +7,8 @@ const serviceListMap: Record<string, number> = {
   "website-development": 10,
   "mobile-development": 11,
   "advertising": 12,
-  "interview-guest": 13
+  "interview-guest": 13,
+  "others": 9
 };
 
 serve(async (req) => {
