@@ -1,153 +1,84 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const Connect = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    message: ""
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || "";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      console.log("Submitting form data:", formData);
-
-      const { data, error } = await supabase.functions.invoke("form-integrations", {
-        body: {
-          type: "contact",
-          data: formData
-        }
-      });
-
-      if (error) throw error;
-
-      console.log("Edge function response:", data);
-      toast.success("Thank you! We'll get back to you within 72 hours.");
-      setFormData({ name: "", email: "", phone: "", service: "", message: "" });
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="pt-16">
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <h1 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Connect With Us
-            </h1>
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>Tell Us How We Can Help</CardTitle>
-                <CardDescription>
-                  Fill out the form below and we'll get back to you within 72 hours.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Name + Email */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* 📞 Phone Number */}
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+420 123 456 789"
-                      required
-                    />
-                  </div>
-
-                  {/* Service */}
-                  <div className="space-y-2">
-                    <Label htmlFor="service">How can we help you? *</Label>
-                    <Select
-                      value={formData.service}
-                      onValueChange={(value) => setFormData({ ...formData, service: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="website-development">Website Development</SelectItem>
-                        <SelectItem value="mobile-development">Mobile App Development</SelectItem>
-                        <SelectItem value="advertising">Advertising Partnership</SelectItem>
-                        <SelectItem value="interview-guest">Be Our Interview Guest</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Message */}
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Tell us more about your needs *</Label>
-                    <Textarea
-                      id="message"
-                      rows={5}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Please provide details about your project or how you'd like to collaborate with us..."
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
+// Map service codes from the form to Brevo list IDs
+const serviceListMap: Record<string, number> = {
+  "website-development": 10,
+  "mobile-development": 11,
+  "advertising": 12,
+  "interview-guest": 13
 };
 
-export default Connect;
+serve(async (req) => {
+  try {
+    // Log the raw incoming request
+    const body = await req.json();
+    console.log("📥 Incoming request body:", JSON.stringify(body, null, 2));
+
+    const { type, data } = body;
+
+    if (type !== "contact") {
+      console.error("❌ Invalid request type:", type);
+      return new Response(JSON.stringify({ error: "Invalid request type" }), { status: 400 });
+    }
+
+    if (!BREVO_API_KEY) {
+      console.error("❌ BREVO_API_KEY is missing in environment variables");
+      return new Response(JSON.stringify({ error: "Missing API key" }), { status: 500 });
+    }
+
+    const listId = serviceListMap[data.service] || undefined;
+
+    const brevoPayload: Record<string, any> = {
+      email: data.email,
+      attributes: {
+        NAME: data.name,
+        PHONE: data.phone, // ✅ phone number from form
+        SERVICE: data.service,
+        MESSAGE: data.message
+      },
+      updateEnabled: true
+    };
+
+    if (listId) {
+      brevoPayload.listIds = [listId];
+    }
+
+    // Log the payload we’re sending to Brevo
+    console.log("📤 Sending to Brevo:", JSON.stringify(brevoPayload, null, 2));
+
+    const brevoRes = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "api-key": BREVO_API_KEY
+      },
+      body: JSON.stringify(brevoPayload)
+    });
+
+    const rawText = await brevoRes.text();
+    console.log("📡 Brevo HTTP status:", brevoRes.status);
+    console.log("📡 Brevo raw response:", rawText);
+
+    let brevoJson: any;
+    try {
+      brevoJson = JSON.parse(rawText);
+    } catch {
+      brevoJson = { raw: rawText };
+    }
+
+    if (!brevoRes.ok) {
+      console.error("❌ Brevo API error:", brevoJson);
+      return new Response(JSON.stringify({ error: brevoJson }), { status: brevoRes.status });
+    }
+
+    console.log("✅ Brevo API success:", brevoJson);
+    return new Response(JSON.stringify({ success: true, brevo: brevoJson }), { status: 200 });
+
+  } catch (err) {
+    console.error("💥 Function error:", err);
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+  }
+});
