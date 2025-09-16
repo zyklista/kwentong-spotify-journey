@@ -25,8 +25,7 @@ const Connect = () => {
     setIsSubmitting(true);
 
     try {
-      // 1️⃣ Send to Supabase function
-      const { error } = await supabase.functions.invoke("form-integrations", {
+      const { error, data } = await supabase.functions.invoke("form-integrations", {
         body: {
           type: "contact",
           data: formData
@@ -35,29 +34,7 @@ const Connect = () => {
 
       if (error) throw error;
 
-      // 2️⃣ Send to Brevo API (for inspection)
-      const brevoResponse = await fetch("https://api.brevo.com/v3/contacts", {
-        method: "POST",
-        headers: {
-          "accept": "application/json",
-          "content-type": "application/json",
-          "api-key": process.env.NEXT_PUBLIC_BREVO_API_KEY || "" // Store in .env
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          attributes: {
-            NAME: formData.name,
-            PHONE: formData.phone,
-            SERVICE: formData.service,
-            MESSAGE: formData.message
-          },
-          updateEnabled: true
-        })
-      });
-
-      const brevoData = await brevoResponse.json();
-      console.log("Brevo API response:", brevoData);
-
+      console.log("Edge function response:", data);
       toast.success("Thank you! We'll get back to you within 72 hours.");
       setFormData({ name: "", email: "", phone: "", service: "", message: "" });
     } catch (error) {
@@ -77,13 +54,6 @@ const Connect = () => {
             <h1 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Connect With Us
             </h1>
-            
-            <div className="text-center mb-12">
-              <p className="text-lg text-muted-foreground">
-                How can we help you? Choose from our services below and let's start the conversation.
-              </p>
-            </div>
-
             <Card className="max-w-2xl mx-auto">
               <CardHeader>
                 <CardTitle>Tell Us How We Can Help</CardTitle>
@@ -116,7 +86,6 @@ const Connect = () => {
                     </div>
                   </div>
 
-                  {/* 📞 Phone Number Field */}
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
@@ -131,8 +100,8 @@ const Connect = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="service">How can we help you? *</Label>
-                    <Select 
-                      value={formData.service} 
+                    <Select
+                      value={formData.service}
                       onValueChange={(value) => setFormData({ ...formData, service: value })}
                       required
                     >
@@ -140,12 +109,11 @@ const Connect = () => {
                         <SelectValue placeholder="Select a service" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CONTACT_LISTS_ID_WEBDEV">Website Development</SelectItem>
-                        <SelectItem value="CONTACT_LISTS_ID_MOBILEDEV">Mobile App Development</SelectItem>
-                        <SelectItem value="CONTACT_LISTS_ID_WEBDEV">Website Renovation/Redesign</SelectItem>
-                        <SelectItem value="CONTACT_LISTS_ID_ADS">Advertising Partnership</SelectItem>
-                        <SelectItem value="CONTACT_LISTS_ID_INTERV">Be Our Interview Guest</SelectItem>
-                        <SelectItem value="BREVO_CONTACT_LIST_ID">Other</SelectItem>
+                        <SelectItem value="website-development">Website Development</SelectItem>
+                        <SelectItem value="mobile-development">Mobile App Development</SelectItem>
+                        <SelectItem value="advertising">Advertising Partnership</SelectItem>
+                        <SelectItem value="interview-guest">Be Our Interview Guest</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -162,11 +130,7 @@ const Connect = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
-                  >
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? "Sending..." : "Send Message"}
                   </Button>
                 </form>
