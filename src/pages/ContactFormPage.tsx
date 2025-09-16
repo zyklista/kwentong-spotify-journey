@@ -1,213 +1,84 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import Header from "@/components/Header";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const SERVICE_OPTIONS = [
-  { value: "", label: "Select a service" },
-  { value: "admin-tasks", label: "Administrative Tasks" },
-  { value: "data-entry", label: "Data Entry" },
-  { value: "customer-service", label: "Customer Service" },
-  { value: "digital-marketing", label: "Digital Marketing" },
-  { value: "content-creation", label: "Content Creation" },
-  { value: "web-development", label: "Website Development" },
-  { value: "other", label: "Other Services" },
-];
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") || "";
 
-const SERVICE_MAPPING: Record<string, string> = {
-  "admin-tasks": "Administrative Tasks",
-  "data-entry": "Data Entry",
-  "customer-service": "Customer Service",
-  "digital-marketing": "Digital Marketing",
-  "content-creation": "Content Creation",
-  "web-development": "Website Development",
-  "other": "Other Services",
+// Map service codes from the form to Brevo list IDs
+const serviceListMap: Record<string, number> = {
+  "website-development": 10,
+  "mobile-development": 11,
+  "advertising": 12,
+  "interview-guest": 13
 };
 
-const CONTACT_FUNCTION_URL = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/contact_submissions";
-const AUTH_BEARER = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc";
+serve(async (req) => {
+  try {
+    // Log the raw incoming request
+    const body = await req.json();
+    console.log("📥 Incoming request body:", JSON.stringify(body, null, 2));
 
-const ContactFormPage = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    message: "",
-    others: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const { type, data } = body;
 
-  const handleChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-  };
+    if (type !== "contact") {
+      console.error("❌ Invalid request type:", type);
+      return new Response(JSON.stringify({ error: "Invalid request type" }), { status: 400 });
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    if (!BREVO_API_KEY) {
+      console.error("❌ BREVO_API_KEY is missing in environment variables");
+      return new Response(JSON.stringify({ error: "Missing API key" }), { status: 500 });
+    }
 
-    // Map service
-    const mappedService = SERVICE_MAPPING[formData.service] || formData.service || "Other Services";
+    const listId = serviceListMap[data.service] || undefined;
 
-    const payload = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || null,
-      service: mappedService,
-      message: formData.message,
-      others: formData.others || null,
+    const brevoPayload: Record<string, any> = {
+      email: data.email,
+      attributes: {
+        NAME: data.name,
+        PHONE: data.phone, // ✅ phone number from form
+        SERVICE: data.service,
+        MESSAGE: data.message
+      },
+      updateEnabled: true
     };
 
-    try {
-      const response = await fetch(CONTACT_FUNCTION_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": AUTH_BEARER,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        toast.success("Thank you! We'll get back to you within 72 hours.");
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          service: "",
-          message: "",
-          others: "",
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send message");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    if (listId) {
+      brevoPayload.listIds = [listId];
     }
-  };
 
-  return (
-    <div className="min-h-screen">
-      <Header />
-      <main className="pt-16">
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <h1 className="text-4xl font-bold text-center mb-12 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Contact Us
-            </h1>
+    // Log the payload we’re sending to Brevo
+    console.log("📤 Sending to Brevo:", JSON.stringify(brevoPayload, null, 2));
 
-            <div className="text-center mb-12">
-              <p className="text-lg text-muted-foreground">
-                We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-              </p>
-            </div>
+    const brevoRes = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "api-key": BREVO_API_KEY
+      },
+      body: JSON.stringify(brevoPayload)
+    });
 
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>Get In Touch</CardTitle>
-                <CardDescription>
-                  Fill out the form below and we'll get back to you within 72 hours.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleChange("name", e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
+    const rawText = await brevoRes.text();
+    console.log("📡 Brevo HTTP status:", brevoRes.status);
+    console.log("📡 Brevo raw response:", rawText);
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Mobile Number (Optional)</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      placeholder="Enter your mobile number"
-                    />
-                  </div>
+    let brevoJson: any;
+    try {
+      brevoJson = JSON.parse(rawText);
+    } catch {
+      brevoJson = { raw: rawText };
+    }
 
-                  <div className="space-y-2">
-                    <Label htmlFor="service">How can we help you? *</Label>
-                    <Select
-                      value={formData.service}
-                      onValueChange={(value) => handleChange("service", value)}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a service" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SERVICE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+    if (!brevoRes.ok) {
+      console.error("❌ Brevo API error:", brevoJson);
+      return new Response(JSON.stringify({ error: brevoJson }), { status: brevoRes.status });
+    }
 
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Your Message *</Label>
-                    <Textarea
-                      id="message"
-                      value={formData.message}
-                      onChange={(e) => handleChange("message", e.target.value)}
-                      rows={5}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="others">Other Details (Optional)</Label>
-                    <Textarea
-                      id="others"
-                      value={formData.others}
-                      onChange={(e) => handleChange("others", e.target.value)}
-                      rows={2}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
-};
+    console.log("✅ Brevo API success:", brevoJson);
+    return new Response(JSON.stringify({ success: true, brevo: brevoJson }), { status: 200 });
 
-export default ContactFormPage;
+  } catch (err) {
+    console.error("💥 Function error:", err);
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+  }
+});
