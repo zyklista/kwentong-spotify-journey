@@ -14,6 +14,7 @@ const Connect = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     service: "",
     message: ""
   });
@@ -24,19 +25,43 @@ const Connect = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.functions.invoke('form-integrations', {
+      // 1️⃣ Send to Supabase function
+      const { error } = await supabase.functions.invoke("form-integrations", {
         body: {
-          type: 'contact',
+          type: "contact",
           data: formData
         }
       });
 
       if (error) throw error;
 
+      // 2️⃣ Send to Brevo API (for inspection)
+      const brevoResponse = await fetch("https://api.brevo.com/v3/contacts", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "api-key": process.env.NEXT_PUBLIC_BREVO_API_KEY || "" // Store in .env
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          attributes: {
+            NAME: formData.name,
+            PHONE: formData.phone,
+            SERVICE: formData.service,
+            MESSAGE: formData.message
+          },
+          updateEnabled: true
+        })
+      });
+
+      const brevoData = await brevoResponse.json();
+      console.log("Brevo API response:", brevoData);
+
       toast.success("Thank you! We'll get back to you within 72 hours.");
-      setFormData({ name: "", email: "", service: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", service: "", message: "" });
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -91,6 +116,19 @@ const Connect = () => {
                     </div>
                   </div>
 
+                  {/* 📞 Phone Number Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+420 123 456 789"
+                      required
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="service">How can we help you? *</Label>
                     <Select 
@@ -102,12 +140,12 @@ const Connect = () => {
                         <SelectValue placeholder="Select a service" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="website-development">Website Development</SelectItem>
-                        <SelectItem value="mobile-development">Mobile App Development</SelectItem>
-                        <SelectItem value="website-renovation">Website Renovation/Redesign</SelectItem>
-                        <SelectItem value="advertising">Advertising Partnership</SelectItem>
-                        <SelectItem value="interview-guest">Be Our Interview Guest</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="CONTACT_LISTS_ID_WEBDEV">Website Development</SelectItem>
+                        <SelectItem value="CONTACT_LISTS_ID_MOBILEDEV">Mobile App Development</SelectItem>
+                        <SelectItem value="CONTACT_LISTS_ID_WEBDEV">Website Renovation/Redesign</SelectItem>
+                        <SelectItem value="CONTACT_LISTS_ID_ADS">Advertising Partnership</SelectItem>
+                        <SelectItem value="CONTACT_LISTS_ID_INTERV">Be Our Interview Guest</SelectItem>
+                        <SelectItem value="BREVO_CONTACT_LIST_ID">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
