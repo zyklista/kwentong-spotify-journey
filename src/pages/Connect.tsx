@@ -25,7 +25,9 @@ const Connect = () => {
     setIsSubmitting(true);
 
     try {
-      const { error, data } = await supabase.functions.invoke("form-integrations", {
+      console.log("Submitting form data:", formData);
+
+      const { data, error } = await supabase.functions.invoke("form-integrations", {
         body: {
           type: "contact",
           data: formData
@@ -63,6 +65,7 @@ const Connect = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Name + Email */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
@@ -86,6 +89,7 @@ const Connect = () => {
                     </div>
                   </div>
 
+                  {/* 📞 Phone Number */}
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number *</Label>
                     <Input
@@ -98,6 +102,7 @@ const Connect = () => {
                     />
                   </div>
 
+                  {/* Service */}
                   <div className="space-y-2">
                     <Label htmlFor="service">How can we help you? *</Label>
                     <Select
@@ -118,6 +123,7 @@ const Connect = () => {
                     </Select>
                   </div>
 
+                  {/* Message */}
                   <div className="space-y-2">
                     <Label htmlFor="message">Tell us more about your needs *</Label>
                     <Textarea
