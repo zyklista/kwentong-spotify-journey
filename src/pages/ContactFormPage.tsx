@@ -1,3 +1,16 @@
+import React from "react";
+// ...existing code...
+// Add a simple ContactFormPage component for default export
+const ContactFormPage: React.FC = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <h1 className="text-2xl font-bold">Contact Form Page</h1>
+      {/* You can add your form UI here or import an existing form component */}
+    </div>
+  );
+};
+
+export default ContactFormPage;
 // ContactFormPage.ts (frontend)
 const serviceListMap: Record<string, number> = {
   "website-development": 10,
