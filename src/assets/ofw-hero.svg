@@ -1,0 +1,9 @@
+<svg width="1200" height="400" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="400" fill="#F3F4F6"/>
+  <text x="50%" y="30%" dominant-baseline="middle" text-anchor="middle" font-size="48" fill="#2563EB" font-family="Arial, sans-serif">Diary of an OFW</text>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="28" fill="#374151" font-family="Arial, sans-serif">Celebrating Global Filipino Journeys</text>
+  <circle cx="200" cy="320" r="60" fill="#F59E42"/>
+  <circle cx="1000" cy="320" r="60" fill="#10B981"/>
+  <rect x="400" y="300" width="400" height="40" rx="20" fill="#2563EB" opacity="0.2"/>
+  <text x="50%" y="80%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="#6B7280" font-family="Arial, sans-serif">OFWs: Inspiring, Uplifting, Empowering</text>
+</svg>
