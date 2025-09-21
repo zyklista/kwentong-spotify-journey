@@ -4,6 +4,7 @@ import { Play, Calendar, Clock } from "lucide-react";
 import { FaYoutube, FaSpotify } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import ofwHeroPhoto from '@/assets/ofw-hero-photo.jpg';
 
 const MediaSection = () => {
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
@@ -136,8 +137,9 @@ const MediaSection = () => {
 
 
           {/* YouTube Videos Section */}
+          {/* OFW-themed hero photo */}
           <div className="flex justify-center mb-8">
-            <img src={require('@/assets/3d-geometric-bg.jpg')} alt="3D Geometric Background" className="rounded-xl shadow-xl w-full max-w-3xl object-cover" />
+            <img src={ofwHeroPhoto} alt="OFW Hero" className="rounded-xl shadow-xl w-full h-64 object-cover" />
           </div>
           <div className="mb-12 text-left mt-10">
             <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-gray-800">
