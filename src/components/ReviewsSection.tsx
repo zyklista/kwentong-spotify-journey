@@ -45,7 +45,7 @@ const ReviewsSection = () => {
   
   const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
   
-  return <section className={`bg-gradient-to-b from-background to-secondary/5 ${isMobile ? 'py-12' : 'py-20'}`}>
+  return <section className={`bg-gradient-to-t from-secondary/20 to-background/5 ${isMobile ? 'py-12' : 'py-20'} relative overflow-hidden`}>
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className={`text-center ${isMobile ? 'mb-8' : 'mb-16'}`}>
@@ -72,8 +72,8 @@ const ReviewsSection = () => {
           <p className={`text-muted-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
             Ready to join our satisfied clients?
           </p>
-          <a href="#contact" className={`inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-colors ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'}`}>
-            Get Started Today
+          <a href="/survey" className={`inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-full transition-colors ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'}`}> 
+            Help Us Improve
             <Star className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
           </a>
         </div>

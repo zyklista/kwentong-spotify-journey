@@ -83,10 +83,9 @@ const ChatBot = () => {
               </div>
             </div>
             <Button
-              variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
+              className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground"
             >
               <X className="h-4 w-4" />
             </Button>

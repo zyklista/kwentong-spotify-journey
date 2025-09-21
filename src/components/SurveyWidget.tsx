@@ -250,7 +250,7 @@ const SurveyWidget = () => {
           <Button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
             size={isMobile ? "sm" : "default"}
           >
             {isSubmitting ? "Submitting..." : "Submit Feedback"}
