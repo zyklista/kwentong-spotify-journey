@@ -141,8 +141,13 @@ const MediaSection = () => {
 
           {/* YouTube Videos Section */}
           {/* OFW-themed hero photo */}
-          <div className="flex justify-center mb-8">
-            <img src={ofwHeroPhoto} alt="OFW Hero" className="rounded-xl shadow-xl w-full h-64 object-cover" />
+          <div className="w-full mb-8">
+            <img 
+              src={ofwHeroPhoto} 
+              alt="OFW Hero" 
+              className="rounded-xl shadow-xl w-full h-64 sm:h-96 object-cover border border-gray-200 bg-white" 
+              style={{ display: 'block', width: '100%' }} 
+            />
           </div>
           <div className="mb-12 text-left mt-10">
             <h2 className="text-2xl lg:text-3xl font-extrabold mb-4 text-gray-800 mt-16">
