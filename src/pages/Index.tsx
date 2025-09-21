@@ -1,5 +1,6 @@
 
 import Header from "@/components/Header";
+import { Link } from "react-router-dom";
 import { blogPosts } from "@/utils/blogPosts";
 import Hero from "@/components/Hero";
 import YouTubeSection from "@/components/YouTubeSection";
@@ -27,11 +28,15 @@ const Index = () => {
             <h2 className="text-3xl font-bold mb-8 text-gray-800 text-center">Latest Blog Posts</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {blogPosts.slice(0, 3).map(post => (
-                <a key={post.slug} href={`/blog/${post.slug}`} className="block rounded-xl shadow-lg hover:shadow-xl transition bg-transparent p-6">
+                <Link
+                  key={post.slug}
+                  to={`/blog/${post.slug.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')}`}
+                  className="block rounded-xl shadow-lg hover:shadow-xl transition bg-transparent p-6"
+                >
                   <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{post.title}</h3>
                   <p className="text-muted-foreground mb-2">{post.date} • {post.author}</p>
                   <p className="text-gray-700">{post.description}</p>
-                </a>
+                </Link>
               ))}
             </div>
           </div>
