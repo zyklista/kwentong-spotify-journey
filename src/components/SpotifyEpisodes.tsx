@@ -100,7 +100,7 @@ const SpotifyEpisodes = () => {
                   </div>
                   <Button
                     onClick={() => window.open(episode.spotifyUrl, '_blank')}
-                    className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white p-0"
+                    className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground p-0"
                   >
                     <Play className="w-5 h-5 ml-0.5" />
                   </Button>
@@ -129,8 +129,7 @@ const SpotifyEpisodes = () => {
 
                     <Button
                       onClick={() => window.open(episode.spotifyUrl, '_blank')}
-                      variant="ghost"
-                      className="text-green-600 hover:text-green-700 p-0 h-auto font-medium"
+                      className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground p-0 h-auto font-medium"
                     >
                       Listen on Spotify
                       <ExternalLink className="w-4 h-4 ml-1" />
@@ -145,7 +144,7 @@ const SpotifyEpisodes = () => {
             <Button
               onClick={() => window.open('https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty', '_blank')}
               size="lg"
-              className="px-8 py-6 rounded-full bg-green-500 hover:bg-green-600 text-white transition-all duration-300 hover:scale-105"
+              className="px-8 py-6 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold transition-all duration-300 hover:scale-105"
             >
               <Play className="mr-2 w-5 h-5" />
               View All Episodes on Spotify
