@@ -60,8 +60,7 @@ const ReviewsSection = () => {
             reviews.map((review) => (
               <Card key={review.id} className="flex-1 min-w-[280px] max-w-xs p-4 shadow-none bg-transparent border border-gray-200 flex flex-col justify-between">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-primary">{review.name || "Anonymous"}</span>
-                  {review.location && <span className="text-muted-foreground text-xs">{review.location}</span>}
+                  <span className="font-bold text-primary">{review.name}</span>
                 </div>
                 <div className="flex gap-1 mb-1">
                   {renderStars(review.rating)}
@@ -69,16 +68,6 @@ const ReviewsSection = () => {
                 <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'} whitespace-normal break-words`}>
                   {review.feedback}
                 </p>
-                {/* Optionally show interview fields if present */}
-                {review.interview_experience && (
-                  <p className="text-xs text-muted-foreground mt-2"><b>Interview Experience:</b> {review.interview_experience}</p>
-                )}
-                {review.interview_suggestions && (
-                  <p className="text-xs text-muted-foreground mt-1"><b>Suggestions:</b> {review.interview_suggestions}</p>
-                )}
-                {review.interview_favorite && (
-                  <p className="text-xs text-muted-foreground mt-1"><b>Favorite Part:</b> {review.interview_favorite}</p>
-                )}
               </Card>
             ))
           )}
