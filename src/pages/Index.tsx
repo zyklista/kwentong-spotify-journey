@@ -3,7 +3,6 @@ import Header from "@/components/Header";
 import { Link } from "react-router-dom";
 import { blogPosts } from "@/utils/blogPosts";
 import Hero from "@/components/Hero";
-import YouTubeSection from "@/components/YouTubeSection";
 import MediaSection from "@/components/MediaSection";
 import SpotifySection from "@/components/SpotifySection";
 import ContactFormUI from "@/components/ContactFormUI";
@@ -14,6 +13,7 @@ import EbookPopup from "@/components/EbookPopup";
 import ChatBot from "@/components/ChatBot";
 import GDPRPolicy from "@/components/GDPRPolicy";
 import CookieConsent from "@/components/CookieConsent";
+import MediaSyncTrigger from "@/components/MediaSyncTrigger";
 
 const Index = () => {
   return (
@@ -56,6 +56,7 @@ const Index = () => {
       <EbookPopup />
       <ChatBot />
       <CookieConsent />
+      <MediaSyncTrigger />
     </div>
   );
 };
