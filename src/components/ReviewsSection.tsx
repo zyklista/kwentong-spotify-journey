@@ -4,38 +4,30 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const ReviewsSection = () => {
   const isMobile = useIsMobile();
   
-  // Keep only the ratings data without review text
-  const reviews = [{
-    id: 1,
-    name: "Maria Santos",
-    rating: 5,
-    location: "Dubai, UAE"
-  }, {
-    id: 2,
-    name: "Juan dela Cruz",
-    rating: 5,
-    location: "Singapore"
-  }, {
-    id: 3,
-    name: "Anna Rodriguez",
-    rating: 4,
-    location: "Hong Kong"
-  }, {
-    id: 4,
-    name: "Carlos Mendoza",
-    rating: 5,
-    location: "Saudi Arabia"
-  }, {
-    id: 5,
-    name: "Sofia Garcia",
-    rating: 5,
-    location: "Canada"
-  }, {
-    id: 6,
-    name: "Rico Fernandez",
-    rating: 4,
-    location: "Australia"
-  }];
+  // Reviews data with messages
+  const reviews = [
+    {
+      id: 1,
+      name: "Anonymous",
+      rating: 5,
+      location: "Dubai, UAE",
+      message: "The team was incredibly supportive throughout my journey. Highly recommended!"
+    },
+    {
+      id: 2,
+      name: "Anonymous",
+      rating: 5,
+      location: "Singapore",
+      message: "Excellent service and guidance. I felt valued and understood."
+    },
+    {
+      id: 3,
+      name: "Anonymous",
+      rating: 4,
+      location: "Hong Kong",
+      message: "Very helpful and responsive. Thank you for all the assistance!"
+    }
+  ];
   
   const renderStars = (rating: number) => {
     return Array.from({
@@ -45,7 +37,7 @@ const ReviewsSection = () => {
   
   const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
   
-  return <section className={`bg-gradient-to-t from-secondary/20 to-background/5 ${isMobile ? 'py-12' : 'py-20'} relative overflow-hidden`}>
+  return <section className="bg-gradient-to-b from-secondary/50 to-background/90 py-12 relative overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className={`text-center ${isMobile ? 'mb-8' : 'mb-16'}`}>
@@ -62,21 +54,37 @@ const ReviewsSection = () => {
               <span className="text-muted-foreground">({reviews.length} reviews)</span>
             </div>
           </div>
-          <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'}`}>
-            Trusted by OFWs worldwide for guidance, support, and professional services.
-          </p>
+            <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'}`}>
+              Read what our clients have to say about their experiences and the support they've received from our team.
+            </p>
         </div>
 
-        {/* Call to Action */}
-        <div className={`text-center ${isMobile ? 'mt-8' : 'mt-12'}`}>
-          <p className={`text-muted-foreground mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>
-            Ready to join our satisfied clients?
-          </p>
-          <a href="/survey" className={`inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold rounded-full transition-colors ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'}`}> 
-            Help Us Improve
-            <Star className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+        {/* Reviews List - one line, fit messages */}
+        <div className="flex flex-row justify-center items-stretch gap-4 max-w-6xl mx-auto overflow-x-auto">
+          {reviews.map((review) => (
+            <Card key={review.id} className="flex-1 min-w-[280px] max-w-xs p-4 shadow-none bg-transparent border border-gray-200 flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-bold text-primary">{review.name}</span>
+                <span className="text-muted-foreground text-xs">{review.location}</span>
+              </div>
+              <div className="flex gap-1 mb-1">
+                {renderStars(review.rating)}
+              </div>
+              <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'} whitespace-normal break-words`}>
+                {review.message}
+              </p>
+            </Card>
+          ))}
+        </div>
+
+        {/* Rate Us Button */}
+        <div className="flex justify-center mt-8">
+          <a href="/survey" className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-8 py-3 rounded-full text-lg shadow transition">
+            Leave a Review
           </a>
         </div>
+
+          {/* Reviews note added above. No call to action below. */}
       </div>
     </section>;
 };

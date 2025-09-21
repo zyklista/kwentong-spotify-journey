@@ -112,9 +112,9 @@ const MediaSection = () => {
   };
 
   return (
-  <section className="bg-gradient-to-b from-background to-secondary/5 py-20 relative overflow-hidden">
+  <section className="bg-gradient-to-b from-white/95 to-white/60 py-20 relative overflow-hidden">
       {/* Animated Art Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-yellow-100 to-accent/10">
+  <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-yellow-50 to-accent/0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_hsl(var(--primary))_0%,_transparent_70%)] opacity-20 animate-pulse"></div>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,_hsl(var(--accent))_0%,_transparent_70%)] opacity-20 animate-pulse" style={{
           animationDelay: '1s'
@@ -135,6 +135,9 @@ const MediaSection = () => {
               Our mission is to inspire, uplift, and empower our audience to live with greater joy, purpose, and fulfillment by sharing the voices and victories of the global Filipino community.
             </p>
 
+            {/* Add space between notes and image */}
+            <div className="mb-8" />
+
 
           {/* YouTube Videos Section */}
           {/* OFW-themed hero photo */}
@@ -142,12 +145,9 @@ const MediaSection = () => {
             <img src={ofwHeroPhoto} alt="OFW Hero" className="rounded-xl shadow-xl w-full h-64 object-cover" />
           </div>
           <div className="mb-12 text-left mt-10">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-gray-800">
+            <h2 className="text-2xl lg:text-3xl font-extrabold mb-4 text-gray-800 mt-16">
               Most Popular Videos
             </h2>
-            <p className="text-xl text-gray-700 max-w-3xl leading-relaxed">
-              Watch inspiring stories and interviews with OFWs from around the world.
-            </p>
           </div>
           <div className="w-full flex flex-col gap-8 mb-12">
             {loadingYT ? (
@@ -166,8 +166,8 @@ const MediaSection = () => {
                       />
                     </div>
                     <div className="w-full md:w-2/3 flex flex-col justify-center">
-                      <h3 className="text-3xl font-bold mb-2 text-gray-900">{video.title}</h3>
-                      <p className="text-lg text-muted-foreground mb-4">{video.description}</p>
+                      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{video.title}</h3>
+                      <p className="text-lg text-muted-foreground mb-4">{video.description?.split('. ')[0] + (video.description?.includes('.') ? '.' : '')}</p>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
