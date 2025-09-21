@@ -25,7 +25,7 @@ const BlogPosts = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-700">{post.description}</p>
-                    <Link to={`/pages/blog/${post.slug}`} className="inline-block mt-4 text-primary hover:underline font-semibold">Read More</Link>
+                    <Link to={`/blog/${post.slug.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')}`} className="inline-block mt-4 text-primary hover:underline font-semibold">Read More</Link>
                   </CardContent>
                 </Card>
               ))}
