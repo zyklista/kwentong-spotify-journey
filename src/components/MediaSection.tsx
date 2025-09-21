@@ -136,6 +136,9 @@ const MediaSection = () => {
 
 
           {/* YouTube Videos Section */}
+          <div className="flex justify-center mb-8">
+            <img src={require('@/assets/3d-geometric-bg.jpg')} alt="3D Geometric Background" className="rounded-xl shadow-xl w-full max-w-3xl object-cover" />
+          </div>
           <div className="mb-12 text-left mt-10">
             <h2 className="text-2xl lg:text-3xl font-bold mb-4 text-gray-800">
               Most Popular Videos
