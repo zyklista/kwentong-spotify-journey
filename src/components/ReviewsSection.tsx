@@ -1,33 +1,26 @@
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 const ReviewsSection = () => {
   const isMobile = useIsMobile();
   
   // Reviews data with messages
-  const reviews = [
-    {
-      id: 1,
-      name: "Anonymous",
-      rating: 5,
-      location: "Dubai, UAE",
-      message: "The team was incredibly supportive throughout my journey. Highly recommended!"
-    },
-    {
-      id: 2,
-      name: "Anonymous",
-      rating: 5,
-      location: "Singapore",
-      message: "Excellent service and guidance. I felt valued and understood."
-    },
-    {
-      id: 3,
-      name: "Anonymous",
-      rating: 4,
-      location: "Hong Kong",
-      message: "Very helpful and responsive. Thank you for all the assistance!"
-    }
-  ];
+    const [reviews, setReviews] = useState<any[]>([]);
+    useEffect(() => {
+      const fetchReviews = async () => {
+        const { data, error } = await supabase
+          .from('survey_responses')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (!error && data) {
+          setReviews(data);
+        }
+      };
+      fetchReviews();
+    }, []);
   
   const renderStars = (rating: number) => {
     return Array.from({
@@ -35,7 +28,7 @@ const ReviewsSection = () => {
     }, (_, index) => <Star key={index} className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${index < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />);
   };
   
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+    const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
   
   return <section className="bg-gradient-to-b from-secondary/50 to-background/90 py-12 relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -61,20 +54,34 @@ const ReviewsSection = () => {
 
         {/* Reviews List - one line, fit messages */}
         <div className="flex flex-row justify-center items-stretch gap-4 max-w-6xl mx-auto overflow-x-auto">
-          {reviews.map((review) => (
-            <Card key={review.id} className="flex-1 min-w-[280px] max-w-xs p-4 shadow-none bg-transparent border border-gray-200 flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold text-primary">{review.name}</span>
-                <span className="text-muted-foreground text-xs">{review.location}</span>
-              </div>
-              <div className="flex gap-1 mb-1">
-                {renderStars(review.rating)}
-              </div>
-              <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'} whitespace-normal break-words`}>
-                {review.message}
-              </p>
-            </Card>
-          ))}
+          {reviews.length === 0 ? (
+            <div className="text-muted-foreground text-center w-full py-8">No reviews yet. Be the first to leave feedback!</div>
+          ) : (
+            reviews.map((review) => (
+              <Card key={review.id} className="flex-1 min-w-[280px] max-w-xs p-4 shadow-none bg-transparent border border-gray-200 flex flex-col justify-between">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-primary">{review.name || "Anonymous"}</span>
+                  {review.location && <span className="text-muted-foreground text-xs">{review.location}</span>}
+                </div>
+                <div className="flex gap-1 mb-1">
+                  {renderStars(review.rating)}
+                </div>
+                <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'} whitespace-normal break-words`}>
+                  {review.feedback}
+                </p>
+                {/* Optionally show interview fields if present */}
+                {review.interview_experience && (
+                  <p className="text-xs text-muted-foreground mt-2"><b>Interview Experience:</b> {review.interview_experience}</p>
+                )}
+                {review.interview_suggestions && (
+                  <p className="text-xs text-muted-foreground mt-1"><b>Suggestions:</b> {review.interview_suggestions}</p>
+                )}
+                {review.interview_favorite && (
+                  <p className="text-xs text-muted-foreground mt-1"><b>Favorite Part:</b> {review.interview_favorite}</p>
+                )}
+              </Card>
+            ))
+          )}
         </div>
 
         {/* Rate Us Button */}

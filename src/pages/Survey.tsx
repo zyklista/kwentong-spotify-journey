@@ -14,43 +14,23 @@ const Survey = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className={`container mx-auto ${isMobile ? 'px-4 py-8' : 'px-6 py-12'}`}>
+  <main className={`container mx-auto ${isMobile ? 'px-4 py-16' : 'px-6 py-24'}`}>
         {/* Page Header */}
         <div className={`text-center mb-8 ${isMobile ? 'mb-6' : ''}`}>
-          <h1 className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold text-foreground mb-4`}>
-            Customer Feedback Survey
+          <h1 className="font-bold text-foreground text-3xl md:text-4xl max-w-4xl px-4 mx-auto break-words flex justify-center items-center text-center mb-4">
+            Tell us how can we improve
           </h1>
-          <p className={`text-muted-foreground max-w-2xl mx-auto ${isMobile ? 'text-sm' : 'text-lg'}`}>
+          <p className={`text-muted-foreground mx-auto ${isMobile ? 'text-xs max-w-xs' : 'text-base max-w-lg'} break-words`}>
             We value your opinion! Help us improve our services by sharing your feedback and experience.
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className={`flex justify-center mb-8 ${isMobile ? 'mb-6' : ''}`}>
-          <div className="bg-secondary rounded-lg p-1 inline-flex">
-            <Button
-              variant={activeTab === 'form' ? 'default' : 'ghost'}
-              size={isMobile ? 'sm' : 'default'}
-              onClick={() => setActiveTab('form')}
-              className={`${isMobile ? 'text-xs px-3' : 'px-6'}`}
-            >
-              Submit Feedback
-            </Button>
-            <Button
-              variant={activeTab === 'responses' ? 'default' : 'ghost'}
-              size={isMobile ? 'sm' : 'default'}
-              onClick={() => setActiveTab('responses')}
-              className={`${isMobile ? 'text-xs px-3' : 'px-6'}`}
-            >
-              View Responses
-            </Button>
-          </div>
-        </div>
+        {/* Tab Navigation removed for cleaner layout */}
 
         {/* Content */}
         <div className="min-h-[500px]">
           {activeTab === 'form' ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-12">
               <SurveyWidget />
             </div>
           ) : (

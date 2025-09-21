@@ -14,6 +14,9 @@ interface SurveyFormData {
   email: string;
   rating: number;
   feedback: string;
+  interviewExperience: string;
+  interviewSuggestions: string;
+  interviewFavorite: string;
 }
 
 const SurveyWidget = () => {
@@ -24,6 +27,9 @@ const SurveyWidget = () => {
     email: "",
     rating: 0,
     feedback: "",
+    interviewExperience: "",
+    interviewSuggestions: "",
+    interviewFavorite: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -89,6 +95,9 @@ const SurveyWidget = () => {
           email: formData.email.trim(),
           rating: formData.rating,
           feedback: formData.feedback.trim(),
+          interview_experience: formData.interviewExperience.trim(),
+          interview_suggestions: formData.interviewSuggestions.trim(),
+          interview_favorite: formData.interviewFavorite.trim(),
         }]);
 
       if (error) {
@@ -103,10 +112,13 @@ const SurveyWidget = () => {
 
       // Reset form
       setFormData({
-        name: "",
-        email: "",
-        rating: 0,
-        feedback: "",
+    name: "",
+    email: "",
+    rating: 0,
+    feedback: "",
+    interviewExperience: "",
+    interviewSuggestions: "",
+    interviewFavorite: "",
       });
     } catch (error: any) {
       console.error('Survey submission error:', error);
@@ -242,6 +254,54 @@ const SurveyWidget = () => {
               placeholder="Please share your feedback, suggestions, or experience..."
               required
               rows={isMobile ? 3 : 4}
+              className={isMobile ? 'text-sm' : ''}
+            />
+          </div>
+
+          {/* Interview Experience Field */}
+          <div className="space-y-2">
+            <Label htmlFor="interviewExperience" className={isMobile ? 'text-sm' : ''}>
+              How was your interview experience?
+            </Label>
+            <Textarea
+              id="interviewExperience"
+              name="interviewExperience"
+              value={formData.interviewExperience}
+              onChange={handleInputChange}
+              placeholder="Describe your interview experience..."
+              rows={isMobile ? 2 : 3}
+              className={isMobile ? 'text-sm' : ''}
+            />
+          </div>
+
+          {/* Interview Suggestions Field */}
+          <div className="space-y-2">
+            <Label htmlFor="interviewSuggestions" className={isMobile ? 'text-sm' : ''}>
+              Any suggestions to improve our interview process?
+            </Label>
+            <Textarea
+              id="interviewSuggestions"
+              name="interviewSuggestions"
+              value={formData.interviewSuggestions}
+              onChange={handleInputChange}
+              placeholder="Share your suggestions..."
+              rows={isMobile ? 2 : 3}
+              className={isMobile ? 'text-sm' : ''}
+            />
+          </div>
+
+          {/* Interview Favorite Field */}
+          <div className="space-y-2">
+            <Label htmlFor="interviewFavorite" className={isMobile ? 'text-sm' : ''}>
+              What was your favorite part of the interview?
+            </Label>
+            <Textarea
+              id="interviewFavorite"
+              name="interviewFavorite"
+              value={formData.interviewFavorite}
+              onChange={handleInputChange}
+              placeholder="Let us know what you liked most..."
+              rows={isMobile ? 2 : 3}
               className={isMobile ? 'text-sm' : ''}
             />
           </div>
