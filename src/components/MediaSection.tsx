@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Play, Calendar, Clock } from "lucide-react";
 import { FaYoutube, FaSpotify } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import ofwHeroPhoto from '@/assets/ofw-hero-photo.jpg';
+// Replace with your YouTube Data API key and channel ID
+const YOUTUBE_API_KEY = "AIzaSyC5UC4kcPjIcJMR4wgr4MN100zmhEKti30";
+const CHANNEL_ID = "UCANMUQ39X4PcnUENrxFocbw";
 
 const MediaSection = () => {
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
@@ -17,25 +19,66 @@ const MediaSection = () => {
   useEffect(() => {
     fetchYouTubeVideos();
     fetchSpotifyEpisodes();
-    triggerMediaSync();
+    // Removed triggerMediaSync
   }, []);
 
   const fetchYouTubeVideos = async () => {
     try {
-      const { data, error } = await supabase
-        .from('youtube_videos')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(12);
+      // Step 1: Get video IDs from search
+      const searchRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=20`
+      );
+      const searchData = await searchRes.json();
+      const videoIds = searchData.items
+        .filter(item => item.id.kind === "youtube#video")
+        .map(item => item.id.videoId)
+        .join(",");
 
-      if (error) {
-        console.error('Error fetching YouTube videos:', error);
+      if (!videoIds) {
+        setYoutubeVideos([]);
+        setLatestVideo(null);
+        setLoadingYT(false);
         return;
       }
-      setYoutubeVideos(data || []);
-      setLatestVideo((data || [])[0] || null);
+
+      // Step 2: Get video details (including duration)
+      const videosRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?key=${YOUTUBE_API_KEY}&id=${videoIds}&part=snippet,contentDetails`
+      );
+      const videosData = await videosRes.json();
+
+      // Step 3: Filter videos by duration
+      const minSeconds = 300; // 5 minutes
+      const parseDuration = (iso) => {
+        const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        const hours = parseInt(match?.[1] || 0);
+        const minutes = parseInt(match?.[2] || 0);
+        const seconds = parseInt(match?.[3] || 0);
+        return hours * 3600 + minutes * 60 + seconds;
+      };
+
+      const videos = videosData.items
+        .filter(item => parseDuration(item.contentDetails.duration) >= minSeconds)
+        .map(item => ({
+          id: item.id,
+          title: item.snippet.title,
+          description: (() => {
+            const desc = item.snippet.description.trim();
+            const match = desc.match(/^(.*?\.)\s/);
+            if (match) return match[1];
+            const firstPeriod = desc.indexOf('.');
+            if (firstPeriod !== -1) return desc.slice(0, firstPeriod + 1);
+            return desc;
+          })(),
+          thumbnail_url: item.snippet.thumbnails.high.url,
+          published_at: item.snippet.publishedAt,
+          duration: item.contentDetails.duration,
+        }));
+
+      setYoutubeVideos(videos);
+      setLatestVideo(videos[0] || null);
     } catch (error) {
-      console.error('Error fetching YouTube videos:', error);
+      console.error("Error fetching YouTube videos:", error);
     } finally {
       setLoadingYT(false);
     }
