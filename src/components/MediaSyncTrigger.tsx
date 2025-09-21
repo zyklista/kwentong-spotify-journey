@@ -36,8 +36,8 @@ const MediaSyncTrigger = () => {
         // Map database columns to interface properties
         const mappedData: SyncStatus[] = (data || []).map(item => ({
           platform: item.platform,
-          sync_status: item.status as 'pending' | 'in_progress' | 'completed' | 'failed',
-          last_sync_at: item.last_sync,
+          sync_status: item.sync_status as 'pending' | 'in_progress' | 'completed' | 'failed',
+          last_sync_at: item.last_sync_at,
           error_message: item.error_message
         }));
         setSyncStatuses(mappedData);

@@ -18,6 +18,41 @@ const MediaSection = () => {
     fetchYouTubeVideos();
     fetchSpotifyEpisodes();
     triggerMediaSync();
+    
+    // Set up automatic refresh every 5 minutes to ensure data stays fresh
+    const refreshInterval = setInterval(() => {
+      fetchYouTubeVideos();
+      fetchSpotifyEpisodes();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    // Set up real-time subscriptions for immediate updates
+    const youtubeSubscription = supabase
+      .channel('youtube_videos_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'youtube_videos' },
+        () => {
+          console.log('YouTube videos updated, refreshing...');
+          fetchYouTubeVideos();
+        }
+      )
+      .subscribe();
+
+    const spotifySubscription = supabase
+      .channel('spotify_episodes_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'spotify_episodes' },
+        () => {
+          console.log('Spotify episodes updated, refreshing...');
+          fetchSpotifyEpisodes();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      clearInterval(refreshInterval);
+      youtubeSubscription.unsubscribe();
+      spotifySubscription.unsubscribe();
+    };
   }, []);
 
   const fetchYouTubeVideos = async () => {
