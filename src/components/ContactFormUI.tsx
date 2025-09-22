@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const ContactFormUI = ({ endpoint }: { endpoint: string }) => {
+const NewsletterForm = ({ endpoint }: { endpoint: string }) => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,10 +20,12 @@ const ContactFormUI = ({ endpoint }: { endpoint: string }) => {
     setError("");
     setSuccess(false);
     try {
-      const res = await fetch(endpoint, {
+      // Replace with your deployed Edge Function URL
+  const edgeFunctionUrl = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/newsletter-bravo";
+      const res = await fetch(edgeFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "newsletter", name, email })
+        body: JSON.stringify({ name, email })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -64,4 +66,4 @@ const ContactFormUI = ({ endpoint }: { endpoint: string }) => {
   );
 };
 
-export default ContactFormUI;
+export default NewsletterForm;

@@ -16,37 +16,34 @@ export type Database = {
     Tables: {
       contact_submissions: {
         Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-          phone: string | null
-          service: string | null
-          updated_at: string
-        }
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          service: string;
+          message: string | null;
+          created_at: string;
+        };
         Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-          phone?: string | null
-          service?: string | null
-          updated_at?: string
-        }
+          id?: string;
+          name: string;
+          email: string;
+          phone?: string | null;
+          service: string;
+          message?: string | null;
+          created_at?: string;
+        };
         Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          phone?: string | null
-          service?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          id?: string;
+          name?: string;
+          email?: string;
+          phone?: string | null;
+          service?: string;
+          message?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       ebook_signups: {
         Row: {
           created_at: string
