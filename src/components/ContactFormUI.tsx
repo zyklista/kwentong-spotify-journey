@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const NewsletterForm = ({ endpoint }: { endpoint: string }) => {
+const NewsletterForm = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,9 +20,9 @@ const NewsletterForm = ({ endpoint }: { endpoint: string }) => {
     setError("");
     setSuccess(false);
     try {
-      // Replace with your deployed Edge Function URL
-  const edgeFunctionUrl = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/newsletter-bravo";
-      const res = await fetch(edgeFunctionUrl, {
+      // Use the endpoint prop, fallback to the correct default URL
+  const edgeFunctionUrl = "https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/newsletter-signup";
+  const res = await fetch(edgeFunctionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email })

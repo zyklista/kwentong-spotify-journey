@@ -44,7 +44,7 @@ const Index = () => {
   <ReviewsSection />
   <SocialSection />
   {/* Newsletter Subscription */}
-  <NewsletterForm endpoint="/api/newsletter" />
+  <NewsletterForm />
             {/* Add space below the newsletter section */}
             <div className="mb-8" />
       </main>
