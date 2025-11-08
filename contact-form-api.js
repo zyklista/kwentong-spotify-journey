@@ -40,7 +40,8 @@ const serviceListMap = {
   'others': 9
 };
 
-const OPENAI_API_KEY = process.env.OPEN_AI_CHATBOT;
+// Prefer the new secret `OPEN_AI_CHATBOT` for the chatbot proxy, fall back to older env names
+const CHATBOT_KEY = process.env.OPEN_AI_CHATBOT || process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
 
 app.post('/api/contact-form', async (req, res) => {
   try {
@@ -141,17 +142,15 @@ app.post('/api/contact-form', async (req, res) => {
 });
 
 
-// Simple Chatbot proxy endpoint to avoid 404s from the frontend chat component.
-// If OPENAI_API_KEY is not configured the endpoint responds with helpful error (500).
+// Single chatbot proxy endpoint (returns clear error if key missing)
 app.post('/api/chatbot', async (req, res) => {
   try {
     const { message, messages } = req.body || {};
 
-    if (!OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OPENAI_API_KEY not configured on server' });
+    if (!CHATBOT_KEY) {
+      return res.status(500).json({ error: 'OPEN_AI_CHATBOT (or fallback) not configured on server' });
     }
 
-    // Build messages for the OpenAI Chat Completion
     const chatMessages = [
       { role: 'system', content: 'You are an empathetic assistant for Overseas Filipino Workers (OFWs). Provide concise, helpful, and culturally appropriate responses.' }
     ];
@@ -169,7 +168,7 @@ app.post('/api/chatbot', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${CHATBOT_KEY}`
       },
       body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: chatMessages, temperature: 0.7, max_tokens: 512 }),
       timeout: 20000
