@@ -33,6 +33,14 @@ const EbookPopup = () => {
       });
       return;
     }
+    if (!name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your name.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       console.log('Submitting ebook form:', {
@@ -41,21 +49,37 @@ const EbookPopup = () => {
       });
 
     // Integration with Supabase Edge Function for ebook signups
-const response = await fetch(
-  'https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/ebook_signups',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc'
-    },
-    body: JSON.stringify({
+    const payload = {
       email: email.trim(),
       firstName: name.trim(),
-      listType: 'ebook',
-    }),
-  }
-);
+      name: name.trim(),
+      listType: 'ebook'
+    };
+
+    const response = await fetch(
+      'https://yvmqcqrewqvwroxinzvn.supabase.co/functions/v1/ebook_signups',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc'
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    // If a Make webhook URL is configured, trigger it with the same payload
+    if (makeWebhookUrl && makeWebhookUrl.trim()) {
+      try {
+        fetch(makeWebhookUrl.trim(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('Webhook post failed', err));
+      } catch (err) {
+        console.warn('Webhook error', err);
+      }
+    }
 
 if (!response.ok) {
   const errorData = await response.json();

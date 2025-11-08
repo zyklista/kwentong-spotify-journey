@@ -43,9 +43,9 @@ const NewsletterForm = () => {
   };
 
   return (
-  <section className="bg-gradient-to-b from-secondary/30 to-background/80 relative overflow-hidden">
+  <section className="bg-white relative overflow-hidden py-12">
     <div className="w-full relative z-10">
-      <form onSubmit={handleSubmit} className="w-full bg-gradient-to-b from-background to-secondary/5 rounded-none shadow-none p-0 flex flex-col items-center">
+      <form onSubmit={handleSubmit} className="w-full bg-white rounded-none shadow-none p-0 flex flex-col items-center">
         <div className="flex flex-col items-center mb-6 w-full">
           <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-base font-semibold shadow mb-2 mt-6">Newsletter</span>
           <p className="text-3xl font-bold text-center text-gray-800 mb-2">Subscribe for Updates</p>

@@ -30,7 +30,7 @@ const ReviewsSection = () => {
   
     const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
   
-  return <section className="bg-gradient-to-b from-secondary/50 to-background/90 py-12 relative overflow-hidden">
+  return <section className="bg-white py-12 relative overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className={`text-center ${isMobile ? 'mb-8' : 'mb-16'}`}>

@@ -4,7 +4,7 @@ import heroImage from "@/assets/hero-image.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/40 via-accent/30 to-primary/10">
+    <section className="relative overflow-hidden bg-white">
       <div className="container mx-auto px-4 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}

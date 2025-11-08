@@ -155,16 +155,7 @@ const MediaSection = () => {
   };
 
   return (
-  <section className="bg-gradient-to-b from-white/95 to-white/60 py-20 relative overflow-hidden">
-      {/* Animated Art Background */}
-  <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-yellow-50 to-accent/0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_hsl(var(--primary))_0%,_transparent_70%)] opacity-20 animate-pulse"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_75%,_hsl(var(--accent))_0%,_transparent_70%)] opacity-20 animate-pulse" style={{
-          animationDelay: '1s'
-        }}></div>
-        <div className="absolute inset-0 bg-[linear-gradient(45deg,_transparent_30%,_hsl(var(--secondary))_40%,_transparent_80%)] opacity-10"></div>
-      </div>
-
+  <section className="bg-white py-20 relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 animate-fade-in">
