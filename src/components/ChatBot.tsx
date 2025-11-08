@@ -54,15 +54,24 @@ const ChatBot = () => {
 
       // Handle non-JSON or non-2xx responses gracefully
       if (!resp.ok) {
-        const text = await resp.text();
-        console.warn('Chatbot API returned non-OK', resp.status, text);
+        // Try to parse JSON error body
+        let errBody: any = null;
+        try { errBody = await resp.json(); } catch { /* ignore */ }
+        console.warn('Chatbot API returned non-OK', resp.status, errBody);
+
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
-          text: `Sorry, the AI service returned an error (${resp.status}). Please try again later.`,
+          text:
+            resp.status === 429
+              ? 'The AI service is currently over its quota. Please try again later.'
+              : resp.status === 401
+              ? 'AI service unauthorized. Please check server configuration.'
+              : `Sorry, the AI service returned an error (${resp.status}). Please try again later.`,
           isUser: false,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, botMessage]);
+        setIsLoading(false);
         return;
       }
 
