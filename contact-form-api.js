@@ -40,6 +40,27 @@ const serviceListMap = {
   'others': 9
 };
 
+// Lightweight local fallback responder used when OpenAI is unavailable (429/quota) or downstream errors occur.
+function generateFallbackReply(userMessage) {
+  const msg = (userMessage || '').toLowerCase();
+  // Simple heuristic responses for common OFW topics
+  if (msg.includes('remit') || msg.includes('remittance') || msg.includes('send money') || msg.includes('money')) {
+    return `Here are 3 quick tips for sending money safely:
+1) Use a licensed money transfer service or a reputable bank; compare fees and exchange rates.
+2) Double-check recipient details before sending; confirm full name and account numbers.
+3) Keep transaction receipts and use tracking; avoid sharing PINs or OTPs with anyone.`;
+  }
+  if (msg.includes('work') || msg.includes('job') || msg.includes('visa') || msg.includes('contract')) {
+    return `Quick guidance on work and contracts: always read your contract carefully, verify employer details, keep copies of important documents, and consult the nearest Philippine embassy or labor office for assistance.`;
+  }
+  if (msg.includes('health') || msg.includes('insurance') || msg.includes('medical')) {
+    return `For health and insurance: check what medical coverage your employer provides, register with local health services, and consider supplemental international travel or expatriate insurance for emergencies.`;
+  }
+
+  // Generic fallback
+  return `Sorry — our AI assistant is temporarily unavailable. Meanwhile: 1) Try simple, direct questions (e.g., "How do I send remittances safely?"). 2) Check our blog and resources for guides. 3) For urgent support, email us at info@diaryofanofw.com and we'll assist you.`;
+}
+
 // Prefer the new secret `OPEN_AI_CHATBOT` for the chatbot proxy, fall back to older env names
 const CHATBOT_KEY = process.env.OPEN_AI_CHATBOT || process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
 
@@ -179,7 +200,13 @@ app.post('/api/chatbot', async (req, res) => {
     try { json = JSON.parse(text); } catch { json = { raw: text }; }
 
     if (!resp.ok) {
-      // Forward the exact status from OpenAI (429/quota, 401/unauthorized, etc.)
+      // If OpenAI signals quota (429), return a helpful local fallback reply instead of an error
+      if (resp.status === 429) {
+        const fallback = generateFallbackReply(message || (messages && messages.slice(-1)[0]?.content));
+        console.warn('OpenAI quota hit — returning local fallback reply');
+        return res.status(200).json({ reply: fallback, fallback: true, reason: 'quota' });
+      }
+      // Otherwise forward the exact status from OpenAI (401/unauthorized, etc.)
       return res.status(resp.status).json({ error: 'OpenAI API error', status: resp.status, body: json });
     }
 
@@ -197,52 +224,4 @@ app.listen(PORT, () => {
   console.log(`Contact form API running on http://localhost:${PORT}/api/contact-form`);
 });
 
-// Note: older versions of this file previously had a /api/chatbot proxy. Re-add it so the
-// frontend chat UI can call the local server instead of getting a 404.
-app.post('/api/chatbot', async (req, res) => {
-  try {
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const { message, messages } = req.body || {};
 
-    if (!OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OPENAI_API_KEY not configured on server' });
-    }
-
-    const chatMessages = [
-      { role: 'system', content: 'You are an empathetic assistant for Overseas Filipino Workers (OFWs). Provide concise, helpful, and culturally appropriate responses.' }
-    ];
-
-    if (Array.isArray(messages) && messages.length) {
-      messages.forEach(m => { if (m && m.role && m.content) chatMessages.push({ role: m.role, content: m.content }); });
-    } else if (message) {
-      chatMessages.push({ role: 'user', content: message });
-    } else {
-      return res.status(400).json({ error: 'Missing message or messages in request body' });
-    }
-
-    const openaiUrl = 'https://api.openai.com/v1/chat/completions';
-    const resp = await fetch(openaiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: chatMessages, temperature: 0.7, max_tokens: 512 }),
-      timeout: 20000
-    });
-
-    const text = await resp.text();
-    let json;
-    try { json = JSON.parse(text); } catch { json = { raw: text }; }
-
-    if (!resp.ok) {
-      return res.status(502).json({ error: 'OpenAI API error', status: resp.status, body: json });
-    }
-
-    const reply = json?.choices?.[0]?.message?.content ?? (typeof json === 'string' ? json : JSON.stringify(json));
-    return res.status(200).json({ reply });
-  } catch (err) {
-    console.error('Chatbot proxy error', err);
-    return res.status(500).json({ error: err.message || String(err) });
-  }
-});
