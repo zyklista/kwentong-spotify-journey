@@ -179,7 +179,8 @@ app.post('/api/chatbot', async (req, res) => {
     try { json = JSON.parse(text); } catch { json = { raw: text }; }
 
     if (!resp.ok) {
-      return res.status(502).json({ error: 'OpenAI API error', status: resp.status, body: json });
+      // Forward the exact status from OpenAI (429/quota, 401/unauthorized, etc.)
+      return res.status(resp.status).json({ error: 'OpenAI API error', status: resp.status, body: json });
     }
 
     const reply = json?.choices?.[0]?.message?.content ?? (typeof json === 'string' ? json : JSON.stringify(json));
