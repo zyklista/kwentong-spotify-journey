@@ -11,6 +11,10 @@ interface Message {
 }
 
 const ChatBot = () => {
+  // Feature flag: enable chatbot only when VITE_ENABLE_CHATBOT is set to 'true'
+  const CHATBOT_ENABLED = (import.meta.env.VITE_ENABLE_CHATBOT ?? "false") === "true";
+  if (!CHATBOT_ENABLED) return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
