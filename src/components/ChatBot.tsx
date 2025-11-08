@@ -19,7 +19,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm your OFW assistant. How can I help you today?",
+      text: "Hello! We're Team D. How can I help you today?",
       isUser: false,
       timestamp: new Date(),
     },
@@ -42,17 +42,34 @@ const ChatBot = () => {
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      const resp = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: inputMessage })
+      });
+      const body = await resp.json();
+      const aiText = body?.reply || 'Sorry, I could not generate a response right now.';
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Thank you for your question about OFW experiences. I'm here to help with information about working abroad, remittances, and connecting with the Filipino community.",
+        text: aiText,
         isUser: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Sorry, there was an error contacting the AI service. Please try again later.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, botMessage]);
+      console.error('Chat send error', err);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

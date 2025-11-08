@@ -20,6 +20,7 @@ const BREVO_API_KEY = process.env.BREVO_CONTACT_SUBMISSIONS_API || process.env.B
 const DEFAULT_BREVO_LIST_ID = process.env.BREVO_CONTACT_LIST_ID ? parseInt(process.env.BREVO_CONTACT_LIST_ID, 10) : undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 
 let supabase = null;
@@ -135,6 +136,66 @@ app.post('/api/contact-form', async (req, res) => {
     return res.status(200).json({ success: true, brevo: brevoResult.body });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Chatbot proxy endpoint — forwards user message(s) to OpenAI Chat Completions API
+app.post('/api/chatbot', async (req, res) => {
+  try {
+    const { message, messages } = req.body || {};
+
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'OPENAI_API_KEY not configured on server' });
+    }
+
+    // Build messages array for the chat completion
+    const chatMessages = [];
+    // System prompt to specialize the assistant
+    chatMessages.push({ role: 'system', content: 'You are an empathetic assistant for Overseas Filipino Workers (OFWs). Provide concise, helpful, and culturally appropriate responses about working abroad, remittances, travel, and community resources.' });
+
+    if (Array.isArray(messages) && messages.length) {
+      // messages expected as [{role: 'user'|'assistant', content: '...'}]
+      messages.forEach(m => {
+        if (m && m.role && m.content) chatMessages.push({ role: m.role, content: m.content });
+      });
+    } else if (message) {
+      chatMessages.push({ role: 'user', content: message });
+    } else {
+      return res.status(400).json({ error: 'Missing message or messages in request body' });
+    }
+
+    const openaiUrl = 'https://api.openai.com/v1/chat/completions';
+    const resp = await fetch(openaiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: chatMessages,
+        temperature: 0.7,
+        max_tokens: 512
+      }),
+      timeout: 20000
+    });
+
+    const text = await resp.text();
+    let json;
+    try { json = JSON.parse(text); } catch { json = { raw: text }; }
+
+    if (!resp.ok) {
+      console.error('OpenAI error', { status: resp.status, body: json });
+      return res.status(502).json({ error: 'OpenAI API error', status: resp.status, body: json });
+    }
+
+    // Extract assistant reply safely
+    const reply = json?.choices?.[0]?.message?.content ?? (typeof json === 'string' ? json : JSON.stringify(json));
+    return res.status(200).json({ reply });
+  } catch (err) {
+    console.error('Chatbot proxy error', err);
+    return res.status(500).json({ error: err.message || String(err) });
   }
 });
 
