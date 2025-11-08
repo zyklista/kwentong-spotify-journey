@@ -15,19 +15,28 @@ const app = express();
 app.use(bodyParser.json());
 
 
-const BREVO_API_KEY = process.env.BREVO_API_KEY;
+// Prefer the new secrets names if provided. Keep backward compatibility with BREVO_API_KEY.
+const BREVO_API_KEY = process.env.BREVO_CONTACT_SUBMISSIONS_API || process.env.BREVO_API_KEY;
+const DEFAULT_BREVO_LIST_ID = process.env.BREVO_CONTACT_LIST_ID ? parseInt(process.env.BREVO_CONTACT_LIST_ID, 10) : undefined;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+let supabase = null;
+if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+} else {
+  console.warn('Warning: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set. Database inserts will be skipped.');
+}
 
 
+// Optional mapping of service => Brevo list id. If you set BREVO_CONTACT_LIST_ID env var, it will take precedence.
 const serviceListMap = {
-  'website-development': 10,
-  'mobile-development': 11,
-  'advertising': 12,
-  'interview-guest': 13,
+  'full-stack-web-development': 10,
+  'web-renovation-migration': 11,
+  'mobile-app-development': 12,
+  'advertising': 13,
+  'interview-guesting': 14,
   'others': 9
 };
 
@@ -40,23 +49,27 @@ app.post('/api/contact-form', async (req, res) => {
     if (!BREVO_API_KEY) {
       return res.status(500).json({ error: 'Missing API key' });
     }
-    // Save to Supabase
-    const { error: dbError } = await supabase.from('contact_submissions').insert([
-      {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        service: data.service,
-        message: data.message,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+    // Save to Supabase if configured; otherwise continue and still try Brevo so local testing works.
+    if (supabase) {
+      const { error: dbError } = await supabase.from('contact_submissions').insert([
+        {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          service: data.service,
+          message: data.message,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+      if (dbError) {
+        return res.status(500).json({ error: 'Failed to save to database', details: dbError });
       }
-    ]);
-    if (dbError) {
-      return res.status(500).json({ error: 'Failed to save to database', details: dbError });
+    } else {
+      console.log('Supabase not configured — skipping DB save for contact submission.');
     }
-    // Send to Brevo
-    const listId = serviceListMap[data.service] || undefined;
+    // Send to Brevo (contacts). Prefer the configured list id secret; otherwise fallback to service-specific lists.
+    const listId = DEFAULT_BREVO_LIST_ID ?? serviceListMap[data.service];
     const brevoPayload = {
       email: data.email,
       attributes: {
@@ -70,26 +83,56 @@ app.post('/api/contact-form', async (req, res) => {
     if (listId) {
       brevoPayload.listIds = [listId];
     }
-    const brevoRes = await fetch('https://api.brevo.com/v3/contacts', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        'api-key': BREVO_API_KEY
-      },
-      body: JSON.stringify(brevoPayload)
-    });
-    const rawText = await brevoRes.text();
-    let brevoJson;
-    try {
-      brevoJson = JSON.parse(rawText);
-    } catch {
-      brevoJson = { raw: rawText };
+
+    // Helper: send payload to Brevo with one retry and improved error handling/logging
+    async function sendToBrevo(payload, attempts = 2) {
+      const url = 'https://api.brevo.com/v3/contacts';
+      let lastError = null;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              accept: 'application/json',
+              'content-type': 'application/json',
+              'api-key': BREVO_API_KEY
+            },
+            body: JSON.stringify(payload),
+            timeout: 10000
+          });
+            const text = await response.text();
+            let json;
+            try { json = JSON.parse(text); } catch { json = { raw: text }; }
+            if (response.ok) {
+              console.log('Brevo: contact created/updated', json);
+              return { ok: true, status: response.status, body: json };
+            }
+            // Handle common Brevo duplicate contact error gracefully — updateEnabled should already cover this,
+            // but some API responses may return 400 with specific messages. We'll log and treat duplicates as success.
+            const bodyStr = typeof json === 'string' ? json : JSON.stringify(json);
+            if (bodyStr && bodyStr.toLowerCase().includes('already exist')) {
+              console.warn('Brevo: contact already exists, treating as success', bodyStr);
+              return { ok: true, status: response.status, body: json };
+            }
+            lastError = { status: response.status, body: json };
+            console.warn('Brevo request failed', lastError);
+        } catch (err) {
+          lastError = err;
+          console.error('Brevo request error', err);
+        }
+        // small backoff before retry
+        await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
+      return { ok: false, error: lastError };
     }
-    if (!brevoRes.ok) {
-      return res.status(brevoRes.status).json({ error: brevoJson });
+
+    const brevoResult = await sendToBrevo(brevoPayload, 2);
+    if (!brevoResult.ok) {
+      // Log and return a 202 (accepted) to avoid failing the entire submission when Brevo is temporarily unreachable.
+      console.error('Failed to deliver contact to Brevo after retries', brevoResult.error);
+      return res.status(202).json({ success: true, warning: 'Saved locally but failed to send to Brevo', brevoError: brevoResult.error });
     }
-    return res.status(200).json({ success: true, brevo: brevoJson });
+    return res.status(200).json({ success: true, brevo: brevoResult.body });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

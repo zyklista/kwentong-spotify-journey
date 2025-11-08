@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import bgImage from "@/assets/3d-geometric-bg.jpg";
 
 const SERVICE_OPTIONS = [
   { value: "full-stack-web-development", label: "Full Stack Web Development" },
@@ -101,7 +102,21 @@ const Connect = () => {
       <main className="py-16">
         <h1 className="text-4xl font-bold text-center mb-8">Let us know how can we help you</h1>
         <div className="flex justify-center mb-8">
-          <img src="/src/assets/3d-geometric-bg.jpg" alt="OFW IT Professionals and Promoters" className="rounded-xl shadow-lg w-full max-w-2xl h-64 object-cover" />
+          <img
+            src={bgImage}
+            alt="OFW IT Professionals and Promoters"
+            className="rounded-xl shadow-lg w-full max-w-2xl h-64"
+            style={{ objectFit: "cover" }}
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              const t = e.currentTarget as HTMLImageElement;
+              // Avoid infinite loop if fallback also fails
+              t.onerror = null;
+              // Inline SVG fallback avoids needing an extra file
+              t.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="24">Image unavailable</text></svg>';
+            }}
+          />
         </div>
         <p className="text-2xl text-center text-gray-800 mb-10 max-w-3xl mx-auto font-semibold leading-relaxed font-sans">
           We offer a range of digital services to support your journey.<br />
