@@ -17,13 +17,13 @@ import CookieConsent from "@/components/CookieConsent";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/5">
+  <div className="min-h-screen bg-white">
       <Header />
   <main>
         <Hero />
         <MediaSection />
   {/* Blog Posts Section */}
-        <section className="py-8 bg-gradient-to-b from-secondary/50 to-background">
+  <section className="py-8 bg-white">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8 text-gray-800 text-center">Latest Blog Posts</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
