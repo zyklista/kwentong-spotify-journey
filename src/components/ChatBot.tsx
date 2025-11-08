@@ -11,8 +11,11 @@ interface Message {
 }
 
 const ChatBot = () => {
-  // Feature flag: enable chatbot only when VITE_ENABLE_CHATBOT is set to 'true'
-  const CHATBOT_ENABLED = (import.meta.env.VITE_ENABLE_CHATBOT ?? "false") === "true";
+  // Feature flag: enable chatbot when VITE_ENABLE_CHATBOT is set to 'true'.
+  // Default to enabled in development mode so the icon appears for local testing.
+  const ENV_FLAG = import.meta.env.VITE_ENABLE_CHATBOT;
+  const IS_DEV = Boolean(import.meta.env.DEV || import.meta.env.MODE === 'development');
+  const CHATBOT_ENABLED = ENV_FLAG === 'true' || (ENV_FLAG == null && IS_DEV);
   if (!CHATBOT_ENABLED) return null;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -48,9 +51,35 @@ const ChatBot = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: inputMessage })
       });
-      const body = await resp.json();
-      const aiText = body?.reply || 'Sorry, I could not generate a response right now.';
 
+      // Handle non-JSON or non-2xx responses gracefully
+      if (!resp.ok) {
+        const text = await resp.text();
+        console.warn('Chatbot API returned non-OK', resp.status, text);
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: `Sorry, the AI service returned an error (${resp.status}). Please try again later.`,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, botMessage]);
+        return;
+      }
+
+      const contentType = resp.headers.get('content-type') || '';
+      let body: any = null;
+      if (contentType.includes('application/json')) {
+        body = await resp.json();
+      } else {
+        const text = await resp.text();
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = { reply: text };
+        }
+      }
+
+      const aiText = body?.reply || 'Sorry, I could not generate a response right now.';
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: aiText,
@@ -74,8 +103,8 @@ const ChatBot = () => {
 
   return (
     <>
-      {/* Chat Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+  {/* Chat Button (bottom-right) */}
+  <div className="fixed bottom-6 right-6 z-40">
         <Button
           onClick={() => setIsOpen(!isOpen)}
           className="h-14 w-14 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -91,7 +120,7 @@ const ChatBot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 w-80 h-96 bg-card border border-border rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300">
+  <div className="fixed bottom-24 right-6 z-40 w-80 h-96 bg-card border border-border rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary to-accent rounded-t-2xl">
             <div className="flex items-center space-x-2">
