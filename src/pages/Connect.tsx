@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Mail, Phone, MapPin } from "lucide-react";
 import bgImage from "@/assets/3d-geometric-bg.jpg";
 
 const SERVICE_OPTIONS = [
@@ -96,6 +97,20 @@ function ContactForm() {
 }
 
 const Connect = () => {
+  const contactJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Diary of an OFW",
+    "url": "https://www.diaryofanofw.com",
+    "contactPoint": [{
+      "@type": "ContactPoint",
+      "telephone": "+420774900384",
+      "contactType": "customer support",
+      "email": "info@diaryofanofw.com",
+      "areaServed": "Worldwide",
+      "availableLanguage": ["English"]
+    }]
+  };
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -131,6 +146,33 @@ const Connect = () => {
           <li><strong>Others:</strong> <span className="font-normal">Custom solutions for unique business or personal needs.</span></li>
         </ul>
         <ContactForm />
+
+        {/* Contact details */}
+        <section className="py-16 px-4">
+          <div className="container mx-auto max-w-4xl">
+            <h2 className="text-3xl font-bold text-center mb-6">Contact Details</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow p-6 text-center">
+                <Mail className="mx-auto mb-3 w-8 h-8 text-primary" />
+                <h3 className="font-semibold text-lg mb-2">Email</h3>
+                <a href="mailto:info@diaryofanofw.com" className="text-primary hover:underline">info@diaryofanofw.com</a>
+              </div>
+              <div className="bg-white rounded-xl shadow p-6 text-center">
+                <Phone className="mx-auto mb-3 w-8 h-8 text-primary" />
+                <h3 className="font-semibold text-lg mb-2">Phone</h3>
+                <a href="tel:+420774900384" className="text-primary hover:underline">+420 774 900 384</a>
+              </div>
+              <div className="bg-white rounded-xl shadow p-6 text-center">
+                <MapPin className="mx-auto mb-3 w-8 h-8 text-primary" />
+                <h3 className="font-semibold text-lg mb-2">Office</h3>
+                <address className="not-italic text-gray-700">Czech Republic (Central Europe)<br/>Diary of an OFW</address>
+              </div>
+            </div>
+            <p className="text-center text-sm text-muted-foreground mt-6">For media inquiries, partnerships, or urgent matters, please include "URGENT" in the subject line.</p>
+          </div>
+        </section>
+        {/* Structured data for SEO */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }} />
       </main>
       <Footer />
     </div>
