@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Play, Calendar, Clock } from "lucide-react";
 import { FaYoutube, FaSpotify } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ofwHeroPhoto from '@/assets/ofw-hero-photo.jpg';
-// Replace with your YouTube Data API key and channel ID
-const YOUTUBE_API_KEY = "AIzaSyC5UC4kcPjIcJMR4wgr4MN100zmhEKti30";
+import { parseYoutubeRss } from "@/utils/parseYoutubeRss";
+import { supabase } from "@/integrations/supabase/client";
+
+// Public channel ID for Diary of an OFW
 const CHANNEL_ID = "UCANMUQ39X4PcnUENrxFocbw";
+// Optional Supabase Edge Function URL (set in env as VITE_MEDIA_SYNC_URL)
+const MEDIA_SYNC_URL = (import.meta.env as any).VITE_MEDIA_SYNC_URL || (import.meta.env as any).VITE_SUPABASE_MEDIA_SYNC_URL || '';
 
 const MediaSection = () => {
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
@@ -14,8 +19,9 @@ const MediaSection = () => {
   const [spotifyEpisodes, setSpotifyEpisodes] = useState<any[]>([]);
   const [loadingYT, setLoadingYT] = useState(true);
   const [loadingSpotify, setLoadingSpotify] = useState(true);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
-  // Fetch YouTube videos from your Supabase table
+  // Fetch YouTube videos from the public channel RSS (no API key required)
   useEffect(() => {
     fetchYouTubeVideos();
     fetchSpotifyEpisodes();
@@ -24,59 +30,128 @@ const MediaSection = () => {
 
   const fetchYouTubeVideos = async () => {
     try {
-      // Step 1: Get video IDs from search
-      const searchRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=20`
-      );
-      const searchData = await searchRes.json();
-      const videoIds = searchData.items
-        .filter(item => item.id.kind === "youtube#video")
-        .map(item => item.id.videoId)
-        .join(",");
-
-      if (!videoIds) {
-        setYoutubeVideos([]);
-        setLatestVideo(null);
-        setLoadingYT(false);
-        return;
+      // First, prefer persisted videos from Supabase if available.
+      try {
+        // Try to query rows with numeric duration_seconds >= 300 first (fast server-side filter)
+        let dbResp = await supabase
+          .from('youtube_videos')
+          .select('*')
+          .gte('duration_seconds', 300)
+          .order('published_at', { ascending: false })
+          .limit(12);
+        if (dbResp.error || !dbResp.data || dbResp.data.length === 0) {
+          // Fallback to selecting rows without the filter (older schemas may not have the column)
+          dbResp = await supabase
+            .from('youtube_videos')
+            .select('*')
+            .order('published_at', { ascending: false })
+            .limit(12);
+        }
+        if (!dbResp.error && dbResp.data && dbResp.data.length > 0) {
+          const vids = dbResp.data.map((it: any) => ({
+            id: it.video_id,
+            title: it.title,
+            description: it.description,
+            thumbnail_url: it.thumbnail_url || (it.video_id ? `https://img.youtube.com/vi/${it.video_id}/hqdefault.jpg` : ''),
+            published_at: it.published_at,
+            duration: (it.duration_seconds !== undefined && it.duration_seconds !== null) ? it.duration_seconds : (it.duration || null),
+          }));
+          const filtered = vids.filter(v => getDurationSeconds(v.duration) >= 300);
+          setYoutubeVideos(filtered);
+          setLatestVideo(filtered[0] || null);
+          setLoadingYT(false);
+          return;
+        }
+      } catch (dbErr) {
+        console.warn('Error querying youtube_videos table, falling back to sync endpoints:', dbErr?.message || dbErr);
       }
 
-      // Step 2: Get video details (including duration)
-      const videosRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?key=${YOUTUBE_API_KEY}&id=${videoIds}&part=snippet,contentDetails`
-      );
-      const videosData = await videosRes.json();
+      // If a Supabase Edge Function URL is configured, try it first
+      if (MEDIA_SYNC_URL) {
+        try {
+          const url = `${MEDIA_SYNC_URL.replace(/\/$/, '')}?channel_id=${CHANNEL_ID}&min_duration=300`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const json = await res.json();
+            const items = json.items || [];
+            if (items.length > 0) {
+              const videos = items.map((it: any) => ({
+                id: it.video_id || it.id,
+                title: it.title,
+                description: it.description,
+                thumbnail_url: it.thumbnail_url,
+                published_at: it.published_at,
+                duration: (it.duration_seconds !== undefined && it.duration_seconds !== null) ? it.duration_seconds : (it.duration_iso || null),
+              }));
+              // enforce >= 300s on client as a safety net
+              const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+              setYoutubeVideos(filtered);
+              setLatestVideo(filtered[0] || null);
+              setLoadingYT(false);
+              return;
+            }
+          } else {
+            const body = await res.text().catch(() => '');
+            console.warn('media-sync function returned non-OK, falling back:', res.status, body.slice ? body.slice(0,300) : body);
+          }
+        } catch (err) {
+          console.warn('Failed to call media-sync function, falling back to local enriched/RSS:', err?.message || err);
+        }
+      }
 
-      // Step 3: Filter videos by duration
-      const minSeconds = 300; // 5 minutes
-      const parseDuration = (iso) => {
-        const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-        const hours = parseInt(match?.[1] || 0);
-        const minutes = parseInt(match?.[2] || 0);
-        const seconds = parseInt(match?.[3] || 0);
-        return hours * 3600 + minutes * 60 + seconds;
-      };
+      // Try local server-side enriched endpoint next (returns durations). Falls back to public RSS if unavailable.
+      try {
+        const enrichedRes = await fetch(`/api/media/youtube-enriched?channel_id=${CHANNEL_ID}&min_duration=300`);
+        if (enrichedRes.ok) {
+          const enrichedJson = await enrichedRes.json();
+          const items = enrichedJson.items || [];
+          if (items.length > 0) {
+            const videos = items.map((it: any) => ({
+              id: it.video_id || it.id,
+              title: it.title,
+              description: it.description,
+              thumbnail_url: it.thumbnail_url,
+              published_at: it.published_at,
+              duration: it.duration_seconds ?? it.duration_iso ?? null,
+            }));
+            const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+            setYoutubeVideos(filtered);
+            setLatestVideo(filtered[0] || null);
+            setLoadingYT(false);
+            return;
+          }
+        } else {
+          // If server indicates no server key configured (400) or other issues, we fall back to RSS.
+          const body = await enrichedRes.text().catch(() => '');
+          console.warn('Enriched endpoint unavailable, falling back to RSS:', enrichedRes.status, body.slice ? body.slice(0,300) : body);
+        }
+      } catch (err) {
+        console.warn('youtube-enriched fetch failed, falling back to RSS', err);
+      }
 
-      const videos = videosData.items
-        .filter(item => parseDuration(item.contentDetails.duration) >= minSeconds)
-        .map(item => ({
-          id: item.id,
-          title: item.snippet.title,
-          description: (() => {
-            const desc = item.snippet.description.trim();
-            const match = desc.match(/^(.*?\.)\s/);
-            if (match) return match[1];
-            const firstPeriod = desc.indexOf('.');
-            if (firstPeriod !== -1) return desc.slice(0, firstPeriod + 1);
-            return desc;
-          })(),
-          thumbnail_url: item.snippet.thumbnails.high.url,
-          published_at: item.snippet.publishedAt,
-          duration: item.contentDetails.duration,
-        }));
+      // Fallback: Use the public RSS feed for the channel which doesn't require an API key
+      const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`);
+      if (!rssRes.ok) {
+        console.error('YouTube RSS fetch failed', rssRes.status, await rssRes.text());
+        setYoutubeVideos([]);
+        setLatestVideo(null);
+        return;
+      }
+      const xml = await rssRes.text();
+      const items = parseYoutubeRss(xml);
 
-      setYoutubeVideos(videos);
-      setLatestVideo(videos[0] || null);
+      const videos = items.map(item => ({
+        id: item.video_id,
+        title: item.title,
+        description: item.description,
+        thumbnail_url: item.thumbnail_url,
+        published_at: item.published_at,
+        duration: null,
+      }));
+      // RSS-only items lack duration; we exclude them because we can't verify >=5min
+      const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+      setYoutubeVideos(filtered);
+      setLatestVideo(filtered[0] || null);
     } catch (error) {
       console.error("Error fetching YouTube videos:", error);
     } finally {
@@ -119,10 +194,19 @@ const MediaSection = () => {
     }
   };
 
-  const formatDuration = (duration: string) => {
-    if (!duration) return '';
-    // Convert milliseconds (Spotify) or ISO 8601 (YouTube) to readable format
-    if (/^PT/.test(duration)) {
+  const formatDuration = (duration: any) => {
+    if (duration === null || duration === undefined || duration === '') return '';
+    // If duration is a number (seconds), format directly
+    if (typeof duration === 'number') {
+      const totalSeconds = Math.floor(duration);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    // Convert ISO 8601 (YouTube) to readable format
+    if (typeof duration === 'string' && /^PT/.test(duration)) {
       const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
       if (!match) return duration;
       const hours = parseInt(match[1]) || 0;
@@ -134,15 +218,15 @@ const MediaSection = () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
       }
     }
-    // If it's ms (Spotify)
-    const ms = parseInt(duration);
-    if (!isNaN(ms)) {
+    // If it's ms (Spotify) or numeric string
+    const ms = parseInt(String(duration));
+    if (!isNaN(ms) && String(duration).length > 2) {
       const totalSeconds = Math.floor(ms / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-    return duration;
+    return String(duration);
   };
 
   const formatDate = (dateString: string) => {
@@ -152,6 +236,27 @@ const MediaSection = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Convert various duration formats to seconds. Returns 0 when unknown.
+  const getDurationSeconds = (duration: any): number => {
+    if (duration === null || duration === undefined || duration === '') return 0;
+    if (typeof duration === 'number') return Math.floor(duration);
+    if (typeof duration === 'string') {
+      // ISO 8601 e.g. PT1H2M3S
+      if (/^PT/.test(duration)) {
+        const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (!match) return 0;
+        const hours = parseInt(match[1]) || 0;
+        const minutes = parseInt(match[2]) || 0;
+        const seconds = parseInt(match[3]) || 0;
+        return hours * 3600 + minutes * 60 + seconds;
+      }
+      // numeric string, treat as seconds
+      const n = parseInt(duration, 10);
+      if (!isNaN(n)) return n;
+    }
+    return 0;
   };
 
   return (
@@ -195,14 +300,22 @@ const MediaSection = () => {
               </div>
             ) : youtubeVideos.length > 0 ? (
               youtubeVideos.slice(0, 5).map((video) => (
-                <Card key={video.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 w-full bg-transparent">
+                <Card key={video.id} onClick={() => setPlayingVideoId(video.id)} className="overflow-hidden hover:shadow-xl transition-all duration-300 w-full bg-transparent cursor-pointer">
                   <div className="flex flex-col md:flex-row w-full items-center md:items-start gap-8">
                     <div className="w-full md:w-1/3 flex-shrink-0">
-                      <img
-                        src={video.thumbnail_url}
-                        alt={video.title}
-                        className="w-full h-52 object-cover rounded-lg"
-                      />
+                      <div className="relative rounded-lg overflow-hidden group">
+                        <img
+                          src={video.thumbnail_url}
+                          alt={video.title}
+                          className="w-full h-52 object-cover rounded-lg block"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-3 rounded-full bg-white/90 group-hover:scale-110 group-hover:animate-pulse">
+                            <Play className="w-8 h-8 text-red-600" />
+                            <span className="sr-only">Play video</span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     <div className="w-full md:w-2/3 flex flex-col justify-center">
                       <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{video.title}</h3>
@@ -211,11 +324,17 @@ const MediaSection = () => {
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
                           {formatDate(video.published_at)}
+                          {video.duration ? (
+                            <span className="ml-2 flex items-center text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {formatDuration(video.duration)}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-3">
-                          <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
-                            <FaYoutube className="w-12 h-12 drop-shadow-2xl bg-white p-2 rounded-full border-2 border-red-600" style={{ filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }} />
-                          </a>
+                            <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
+                              <FaYoutube className="w-12 h-12 drop-shadow-2xl bg-white p-2 rounded-full border-2 border-red-600" style={{ filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }} />
+                            </a>
                           <a href="https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800">
                             <FaSpotify className="w-12 h-12 drop-shadow-2xl bg-white p-2 rounded-full border-2 border-green-600" style={{ filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }} />
                           </a>
@@ -241,6 +360,27 @@ const MediaSection = () => {
               </div>
             )}
           </div>
+
+          {/* Video player modal */}
+          <Dialog open={!!playingVideoId} onOpenChange={(open) => { if (!open) setPlayingVideoId(null); }}>
+            <DialogContent className="max-w-4xl w-full">
+              <DialogTitle>Playing video</DialogTitle>
+              {playingVideoId ? (
+                <div className="w-full mt-4">
+                  <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+                    <iframe
+                      title="YouTube player"
+                      src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                      frameBorder="0"
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </DialogContent>
+          </Dialog>
 
           {/* Spotify Episodes Section */}
 

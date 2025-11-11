@@ -224,4 +224,200 @@ app.listen(PORT, () => {
   console.log(`Contact form API running on http://localhost:${PORT}/api/contact-form`);
 });
 
+// -------------------------
+// YouTube enrichment endpoint
+// -------------------------
+// Server-side YouTube Data API key. Provide as env var YOUTUBE_DATA_API_KEY or YT_DATA_API_KEY.
+const YOUTUBE_DATA_API_KEY = process.env.YOUTUBE_DATA_API_KEY || process.env.YT_DATA_API_KEY;
+// Simple in-memory cache for enriched youtube results
+let youtubeCache = { ts: 0, data: null };
+const YOUTUBE_CACHE_TTL = 1000 * 60 * 10; // 10 minutes
+
+// Helper: parse ISO 8601 duration to seconds
+function parseIsoDurationToSeconds(iso) {
+  if (!iso) return 0;
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+  const hours = parseInt(match[1] || '0');
+  const minutes = parseInt(match[2] || '0');
+  const seconds = parseInt(match[3] || '0');
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
+// Fetch and enrich recent videos for a channel (returns array of items)
+async function fetchEnrichedItems(channelId) {
+  // Step 1: fetch RSS to get recent video IDs
+  const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  const rssResp = await fetch(rssUrl);
+  if (!rssResp.ok) {
+    const txt = await rssResp.text();
+    throw new Error(`Failed to fetch YouTube RSS: ${rssResp.status} ${txt.slice(0,200)}`);
+  }
+  const xml = await rssResp.text();
+  const entries = xml.split('<entry>').slice(1);
+  const videoIds = entries.map(e => (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] || '')).filter(Boolean);
+  if (videoIds.length === 0) return [];
+
+  // YouTube Data API videos endpoint allows up to 50 ids per request
+  const batchIds = videoIds.slice(0, 50).join(',');
+  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${batchIds}&key=${YOUTUBE_DATA_API_KEY}`;
+  const videosResp = await fetch(videosUrl);
+  if (!videosResp.ok) {
+    const txt = await videosResp.text();
+    throw new Error(`YouTube Data API failed: ${videosResp.status} ${txt.slice(0,300)}`);
+  }
+  const videosJson = await videosResp.json();
+  const items = (videosJson.items || []).map(it => {
+    const durationIso = it.contentDetails?.duration || null;
+    const durationSeconds = parseIsoDurationToSeconds(durationIso);
+    return {
+      id: it.id,
+      video_id: it.id,
+      title: it.snippet?.title || '',
+      description: it.snippet?.description || '',
+      thumbnail_url: it.snippet?.thumbnails?.high?.url || it.snippet?.thumbnails?.default?.url || `https://img.youtube.com/vi/${it.id}/hqdefault.jpg`,
+      published_at: it.snippet?.publishedAt || null,
+      duration_iso: durationIso,
+      duration_seconds: durationSeconds
+    };
+  })
+  // Filter to 5+ minute videos by default (>= 300 seconds)
+  .filter(i => (i.duration_seconds || 0) >= 300);
+
+  return items;
+}
+
+app.get('/api/media/youtube-enriched', async (req, res) => {
+  try {
+    const channelId = req.query.channel_id || req.query.channelId || req.query.channel || 'UCANMUQ39X4PcnUENrxFocbw';
+    const force = req.query.force === '1' || req.query.force === 'true';
+
+    // Return cached data when valid unless force refresh requested
+    if (!force && youtubeCache.data && (Date.now() - youtubeCache.ts) < YOUTUBE_CACHE_TTL) {
+      return res.status(200).json({ items: youtubeCache.data, cached: true });
+    }
+
+    // Fetch enriched items (prefer server-side Data API). If no server key is present,
+    // fetch and return basic RSS-parsed items so the browser client doesn't need to hit YouTube RSS (CORS).
+    let items = [];
+    if (YOUTUBE_DATA_API_KEY) {
+      items = await fetchEnrichedItems(channelId);
+    } else {
+      // Fetch RSS and parse basic fields
+      const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+      const rssResp = await fetch(rssUrl);
+      if (!rssResp.ok) {
+        const txt = await rssResp.text().catch(() => '');
+        console.warn('Failed to fetch YouTube RSS', rssResp.status, txt.slice(0, 200));
+        return res.status(502).json({ error: 'Failed to fetch YouTube RSS', status: rssResp.status });
+      }
+      const xml = await rssResp.text();
+      const entries = xml.split('<entry>').slice(1);
+      const basic = entries.map(e => {
+        const vid = e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] || '';
+        const title = (e.match(/<title>([^<]+)<\/title>/)?.[1] || '').trim();
+        const published = e.match(/<published>([^<]+)<\/published>/)?.[1] || null;
+        const description = e.match(/<media:description>([^<]+)<\/media:description>/)?.[1] || '';
+        const thumb = e.match(/<media:thumbnail url=\"([^\"]+)\"\/>/)?.[1] || (vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : null);
+        const url = vid ? `https://www.youtube.com/watch?v=${vid}` : '';
+        return {
+          id: vid,
+          video_id: vid,
+          title,
+          description,
+          thumbnail_url: thumb,
+          url,
+          published_at: published,
+          duration_iso: null,
+          duration_seconds: null
+        };
+      });
+
+      // Heuristic: filter out probable Shorts / very short videos when no Data API key
+      const isProbableShort = (it) => {
+        const t = (it.title || '').toLowerCase();
+        const d = (it.description || '').toLowerCase();
+        const url = (it.url || '').toLowerCase();
+        if (url.includes('/shorts/')) return true;
+        if (t.includes('#shorts') || t.includes('shorts') || t.includes('short')) return true;
+        if (d.includes('#shorts') || d.includes('shorts')) return true;
+        return false;
+      };
+
+      items = basic.filter(i => !isProbableShort(i));
+      // Cache basic items
+      youtubeCache = { ts: Date.now(), data: items };
+      return res.status(200).json({ items, cached: false });
+    }
+
+    // Optional: persist to Supabase when requested via query param (persist=1)
+    if ((req.query.persist === '1' || req.query.persist === 'true') && supabase) {
+      try {
+        const now = new Date().toISOString();
+        const rows = items.map(i => ({
+          video_id: i.video_id,
+          title: i.title,
+          description: i.description || null,
+          thumbnail_url: i.thumbnail_url || null,
+          published_at: i.published_at || null,
+          duration: i.duration_iso || (i.duration_seconds ? String(i.duration_seconds) : null),
+          view_count: null,
+          updated_at: now,
+          created_at: now
+        }));
+        const { data: upserted, error: upsertErr } = await supabase.from('youtube_videos').upsert(rows, { onConflict: 'video_id' }).select();
+        if (upsertErr) console.error('Failed to persist youtube_videos:', upsertErr);
+        else console.log(`Persisted ${upserted?.length ?? rows.length} youtube_videos`);
+      } catch (e) {
+        console.error('Error persisting youtube videos', e);
+      }
+    }
+
+    // Cache and return
+    youtubeCache = { ts: Date.now(), data: items };
+    return res.status(200).json({ items, cached: false });
+  } catch (err) {
+    console.error('youtube-enriched error', err);
+    return res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
+
+// Endpoint to trigger a sync and persist enriched items into Supabase (if configured)
+app.get('/api/media/sync', async (req, res) => {
+  try {
+    const channelId = req.query.channel_id || req.query.channelId || req.query.channel || 'UCANMUQ39X4PcnUENrxFocbw';
+    const items = await fetchEnrichedItems(channelId);
+
+    if (!supabase) {
+      return res.status(200).json({ synced: false, reason: 'supabase not configured', count: items.length, items });
+    }
+
+    const now = new Date().toISOString();
+    const rows = items.map(i => ({
+      video_id: i.video_id,
+      title: i.title,
+      description: i.description || null,
+      thumbnail_url: i.thumbnail_url || null,
+      published_at: i.published_at || null,
+      duration: i.duration_iso || (i.duration_seconds ? String(i.duration_seconds) : null),
+      view_count: null,
+      updated_at: now,
+      created_at: now
+    }));
+
+    const { data, error } = await supabase.from('youtube_videos').upsert(rows, { onConflict: 'video_id' }).select();
+    if (error) {
+      console.error('Failed to upsert youtube_videos', error);
+      return res.status(500).json({ synced: false, error });
+    }
+
+    youtubeCache = { ts: Date.now(), data: items };
+    return res.status(200).json({ synced: true, count: data?.length ?? rows.length, rows: data });
+  } catch (err) {
+    console.error('media sync error', err);
+    return res.status(500).json({ error: err.message || String(err) });
+  }
+});
+
 

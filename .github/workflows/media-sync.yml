@@ -1,0 +1,27 @@
+name: YouTube media sync
+
+on:
+  schedule:
+    # Run every 30 minutes. Adjust cron as needed.
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call media-sync function
+        env:
+          MEDIA_SYNC_URL: ${{ secrets.SUPABASE_MEDIA_SYNC_URL }}
+          CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          MIN_DURATION: ${{ secrets.MIN_DURATION }}
+        run: |
+          set -euo pipefail
+          : "Ensure MEDIA_SYNC_URL is set as a secret in the repo"
+          if [ -z "${MEDIA_SYNC_URL:-}" ]; then echo "Missing SUPABASE_MEDIA_SYNC_URL secret"; exit 1; fi
+          MIN_DURATION=${MIN_DURATION:-300}
+          URL="${MEDIA_SYNC_URL}?persist=true&min_duration=${MIN_DURATION}"
+          if [ -n "${CHANNEL_ID:-}" ]; then URL+="&channel_id=${CHANNEL_ID}"; fi
+          echo "Calling media sync: $URL"
+          which jq >/dev/null 2>&1 || sudo apt-get update -y && sudo apt-get install -y jq
+          curl -sS -X GET "$URL" | jq .
