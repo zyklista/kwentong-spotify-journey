@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
   schedule:
-    # Run every 30 minutes. Adjust cron as needed.
-    - cron: '*/30 * * * *'
+    # Run once daily at 02:00 UTC. Adjust cron as needed.
+    - cron: '0 2 * * *'
   workflow_dispatch: {}
 
 jobs:
