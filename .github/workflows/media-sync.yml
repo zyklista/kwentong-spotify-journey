@@ -1,6 +1,8 @@
 name: YouTube media sync
 
 on:
+  push:
+    branches: [ main ]
   schedule:
     # Run every 30 minutes. Adjust cron as needed.
     - cron: '*/30 * * * *'

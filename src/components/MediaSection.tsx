@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Play, Calendar, Clock } from "lucide-react";
 import { FaYoutube, FaSpotify } from "react-icons/fa";
 import { useEffect, useState } from "react";
@@ -20,34 +19,91 @@ const MediaSection = () => {
   const [loadingYT, setLoadingYT] = useState(true);
   const [loadingSpotify, setLoadingSpotify] = useState(true);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  // UI state for manual syncing removed (Sync Now button removed)
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
 
   // Fetch YouTube videos from the public channel RSS (no API key required)
   useEffect(() => {
     fetchYouTubeVideos();
     fetchSpotifyEpisodes();
-    // Removed triggerMediaSync
+    
+    // Auto-sync on mount (silent, in background)
+    if (autoSyncEnabled) {
+      console.log('[MediaSection] Running initial auto-sync');
+      syncYouTubeVideos().catch(err => {
+        console.warn('[MediaSection] Initial auto-sync failed:', err);
+      });
+    }
+
+    // Subscribe to Supabase realtime changes so new persisted videos show up automatically
+    // We listen for INSERT and UPDATE on `youtube_videos` and update the client list when
+    // duration_seconds is >= 300 (5 minutes).
+    try {
+      const channel = supabase
+        .channel('youtube_videos_changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'youtube_videos' }, (payload) => {
+          const row = (payload as any).new;
+          const seconds = row?.duration_seconds ?? (row?.duration ? getDurationSeconds(row.duration) : 0);
+          if (seconds >= 300) {
+            const mapped = {
+              id: row.video_id,
+              title: row.title,
+              description: row.description,
+              thumbnail_url: row.thumbnail_url || (row.video_id ? `https://img.youtube.com/vi/${row.video_id}/hqdefault.jpg` : ''),
+              published_at: row.published_at,
+              duration: row.duration_seconds ?? row.duration ?? null,
+            };
+            setYoutubeVideos(prev => {
+              // avoid duplicates
+              if (prev.find(v => v.id === mapped.id)) return prev;
+              return [mapped, ...prev].slice(0, 12);
+            });
+            setLatestVideo(prev => {
+              if (!prev) return mapped;
+              try {
+                return new Date(mapped.published_at) > new Date(prev.published_at) ? mapped : prev;
+              } catch (e) {
+                return mapped;
+              }
+            });
+          }
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'youtube_videos' }, (payload) => {
+          const row = (payload as any).new;
+          setYoutubeVideos(prev => prev.map(v => v.id === row.video_id ? ({ ...v, duration: row.duration_seconds ?? row.duration ?? v.duration }) : v));
+        })
+        .subscribe();
+
+      return () => {
+        try { channel.unsubscribe(); } catch (e) { /* ignore */ }
+      };
+    } catch (err) {
+      // If realtime isn't available in the environment, swallow the error and keep polling/fetch behavior
+      console.warn('Supabase realtime subscription failed (non-fatal):', err);
+    }
   }, []);
 
   const fetchYouTubeVideos = async () => {
     try {
       // First, prefer persisted videos from Supabase if available.
       try {
-        // Try to query rows with numeric duration_seconds >= 300 first (fast server-side filter)
-        let dbResp = await supabase
+        // Query all rows and filter client-side to ensure we get all videos with duration info
+        const dbResp = await supabase
           .from('youtube_videos')
           .select('*')
-          .gte('duration_seconds', 300)
           .order('published_at', { ascending: false })
-          .limit(12);
-        if (dbResp.error || !dbResp.data || dbResp.data.length === 0) {
-          // Fallback to selecting rows without the filter (older schemas may not have the column)
-          dbResp = await supabase
-            .from('youtube_videos')
-            .select('*')
-            .order('published_at', { ascending: false })
-            .limit(12);
-        }
+          .limit(50);
+        
         if (!dbResp.error && dbResp.data && dbResp.data.length > 0) {
+          console.debug('[MediaSection] DB returned', dbResp.data.length, 'total rows');
+          console.debug('[MediaSection] Sample raw rows:', dbResp.data.slice(0, 3).map(r => ({
+            video_id: r.video_id,
+            title: r.title?.substring(0, 50),
+            duration: r.duration,
+            duration_seconds: r.duration_seconds,
+            published_at: r.published_at
+          })));
+          
           const vids = dbResp.data.map((it: any) => ({
             id: it.video_id,
             title: it.title,
@@ -56,13 +112,33 @@ const MediaSection = () => {
             published_at: it.published_at,
             duration: (it.duration_seconds !== undefined && it.duration_seconds !== null) ? it.duration_seconds : (it.duration || null),
           }));
-          const filtered = vids.filter(v => getDurationSeconds(v.duration) >= 300);
-          setYoutubeVideos(filtered);
+          
+          // Filter client-side: only videos with duration >= 300 seconds (5 minutes)
+          const filtered = vids.filter(v => {
+            const seconds = getDurationSeconds(v.duration);
+            const passes = seconds >= 300;
+            if (!passes && v.duration !== null) {
+              console.debug('[MediaSection] Filtered out:', v.id, 'duration:', v.duration, 'seconds:', seconds);
+            }
+            return passes;
+          });
+          
+          console.debug('[MediaSection] Filtered to', filtered.length, 'videos >= 5min');
+          console.debug('[MediaSection] Filtered videos:', filtered.slice(0, 3).map(f => ({
+            id: f.id,
+            title: f.title?.substring(0, 50),
+            duration: f.duration,
+            published_at: f.published_at
+          })));
+          
+          setYoutubeVideos(filtered.slice(0, 12));
           setLatestVideo(filtered[0] || null);
           setLoadingYT(false);
           return;
+        } else if (dbResp.error) {
+          console.warn('[MediaSection] DB query error:', dbResp.error.message);
         }
-      } catch (dbErr) {
+      } catch (dbErr: any) {
         console.warn('Error querying youtube_videos table, falling back to sync endpoints:', dbErr?.message || dbErr);
       }
 
@@ -85,6 +161,7 @@ const MediaSection = () => {
               }));
               // enforce >= 300s on client as a safety net
               const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+              console.debug('[MediaSection] media-sync returned', items.length, 'items, filtered to', filtered.length);
               setYoutubeVideos(filtered);
               setLatestVideo(filtered[0] || null);
               setLoadingYT(false);
@@ -115,6 +192,7 @@ const MediaSection = () => {
               duration: it.duration_seconds ?? it.duration_iso ?? null,
             }));
             const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+            console.debug('[MediaSection] enriched endpoint returned', items.length, 'items, filtered to', filtered.length);
             setYoutubeVideos(filtered);
             setLatestVideo(filtered[0] || null);
             setLoadingYT(false);
@@ -150,6 +228,7 @@ const MediaSection = () => {
       }));
       // RSS-only items lack duration; we exclude them because we can't verify >=5min
       const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
+      console.debug('[MediaSection] RSS fallback returned', items.length, 'items, filtered to', filtered.length);
       setYoutubeVideos(filtered);
       setLatestVideo(filtered[0] || null);
     } catch (error) {
@@ -158,6 +237,29 @@ const MediaSection = () => {
       setLoadingYT(false);
     }
   };
+
+  // Poll every 60 seconds as a fallback in case realtime subscription isn't delivering events
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.debug('[MediaSection] Polling for latest YouTube videos');
+      fetchYouTubeVideos();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Auto-sync from YouTube every 5 minutes if enabled
+  useEffect(() => {
+    if (!autoSyncEnabled) return;
+    
+    const syncInterval = setInterval(() => {
+      console.log('[MediaSection] Running periodic auto-sync');
+      syncYouTubeVideos().catch(err => {
+        console.warn('[MediaSection] Periodic auto-sync failed:', err);
+      });
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(syncInterval);
+  }, [autoSyncEnabled]);
 
   // Fetch Spotify episodes from your Supabase table
   const fetchSpotifyEpisodes = async () => {
@@ -180,7 +282,31 @@ const MediaSection = () => {
     }
   };
 
-  // Trigger sync for both platforms
+  // Trigger YouTube video sync with persistence (silent from UI)
+  const syncYouTubeVideos = async () => {
+    try {
+      console.log('[MediaSection] Triggering sync via Edge Function...');
+      const { data, error } = await supabase.functions.invoke('media-sync', {
+        body: {
+          channel_id: CHANNEL_ID,
+          persist: true,
+          min_duration: 300,
+        },
+      });
+
+      if (error) {
+        console.error('[MediaSection] Sync error:', error);
+      } else {
+        console.log('[MediaSection] Sync response:', data);
+        // Refresh the list after a short delay so persisted rows become visible
+        setTimeout(() => fetchYouTubeVideos(), 1000);
+      }
+    } catch (err: any) {
+      console.error('[MediaSection] Sync exception:', err);
+    }
+  };
+
+  // Trigger sync for both platforms (legacy)
   const triggerMediaSync = async () => {
     try {
       await supabase.functions.invoke('media-sync', {
@@ -289,9 +415,11 @@ const MediaSection = () => {
             />
           </div>
           <div className="mb-12 text-left mt-10">
-            <h2 className="text-2xl lg:text-3xl font-extrabold mb-4 text-gray-800 mt-16">
-              Most Popular Videos
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-800 mt-16">
+                Most Popular Videos
+              </h2>
+            </div>
           </div>
           <div className="w-full flex flex-col gap-8 mb-12">
             {loadingYT ? (
