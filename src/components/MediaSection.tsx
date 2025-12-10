@@ -13,6 +13,7 @@ const CHANNEL_ID = "UCANMUQ39X4PcnUENrxFocbw";
 const MEDIA_SYNC_URL = (import.meta.env as any).VITE_MEDIA_SYNC_URL || (import.meta.env as any).VITE_SUPABASE_MEDIA_SYNC_URL || '';
 
 const MediaSection = () => {
+  console.debug('[MediaSection] Component rendering');
   const [youtubeVideos, setYoutubeVideos] = useState<any[]>([]);
   const [latestVideo, setLatestVideo] = useState<any>(null);
   const [spotifyEpisodes, setSpotifyEpisodes] = useState<any[]>([]);
@@ -22,8 +23,17 @@ const MediaSection = () => {
   // UI state for manual syncing removed (Sync Now button removed)
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
 
+  // Debug: log when videos state changes
+  useEffect(() => {
+    console.debug('[MediaSection] youtubeVideos state changed:', youtubeVideos.length, 'videos');
+    if (youtubeVideos.length > 0) {
+      console.debug('[MediaSection] First video:', youtubeVideos[0]);
+    }
+  }, [youtubeVideos]);
+
   // Fetch YouTube videos from the public channel RSS (no API key required)
   useEffect(() => {
+    console.debug('[MediaSection] Component mounted, starting fetchYouTubeVideos');
     fetchYouTubeVideos();
     fetchSpotifyEpisodes();
     
@@ -32,6 +42,12 @@ const MediaSection = () => {
       console.log('[MediaSection] Running initial auto-sync');
       syncYouTubeVideos().catch(err => {
         console.warn('[MediaSection] Initial auto-sync failed:', err);
+      });
+
+      // Also try to update existing videos that might not have duration info
+      console.log('[MediaSection] Running initial duration update');
+      updateExistingVideoDurations().catch(err => {
+        console.warn('[MediaSection] Initial duration update failed:', err);
       });
     }
 
@@ -43,8 +59,8 @@ const MediaSection = () => {
         .channel('youtube_videos_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'youtube_videos' }, (payload) => {
           const row = (payload as any).new;
-          const seconds = row?.duration_seconds ?? (row?.duration ? getDurationSeconds(row.duration) : 0);
-          if (seconds >= 300) {
+          // TEMPORARILY: Add videos that have any duration_seconds > 0 for debugging
+          if (row?.duration_seconds > 0) {
             const mapped = {
               id: row.video_id,
               title: row.title,
@@ -52,7 +68,9 @@ const MediaSection = () => {
               thumbnail_url: row.thumbnail_url || (row.video_id ? `https://img.youtube.com/vi/${row.video_id}/hqdefault.jpg` : ''),
               published_at: row.published_at,
               duration: row.duration_seconds ?? row.duration ?? null,
+              duration_text: row.duration_text || null,
             };
+            console.log('[MediaSection] Realtime INSERT:', mapped.id, mapped.duration, 'seconds');
             setYoutubeVideos(prev => {
               // avoid duplicates
               if (prev.find(v => v.id === mapped.id)) return prev;
@@ -70,7 +88,14 @@ const MediaSection = () => {
         })
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'youtube_videos' }, (payload) => {
           const row = (payload as any).new;
-          setYoutubeVideos(prev => prev.map(v => v.id === row.video_id ? ({ ...v, duration: row.duration_seconds ?? row.duration ?? v.duration }) : v));
+          // TEMPORARILY: Update videos that have any duration_seconds > 0
+          if (row?.duration_seconds > 0) {
+            console.log('[MediaSection] Realtime UPDATE:', row.video_id, row.duration_seconds, 'seconds');
+            setYoutubeVideos(prev => prev.map(v => v.id === row.video_id ? ({ ...v, duration: row.duration_seconds ?? row.duration ?? v.duration, duration_text: row.duration_text || v.duration_text }) : v));
+          } else {
+            // Remove videos that no longer have duration info
+            setYoutubeVideos(prev => prev.filter(v => v.id !== row.video_id));
+          }
         })
         .subscribe();
 
@@ -84,59 +109,54 @@ const MediaSection = () => {
   }, []);
 
   const fetchYouTubeVideos = async () => {
+    console.debug('[MediaSection] fetchYouTubeVideos called');
     try {
       // First, prefer persisted videos from Supabase if available.
       try {
-        // Query all rows and filter client-side to ensure we get all videos with duration info
-        const dbResp = await supabase
+        console.debug('[MediaSection] Attempting Supabase query...');
+        // TEMPORARILY: Show all videos with duration_seconds > 0 to debug what's in database
+        const { data, error } = await supabase
           .from('youtube_videos')
           .select('*')
+          .gt('duration_seconds', 0)
           .order('published_at', { ascending: false })
           .limit(50);
         
-        if (!dbResp.error && dbResp.data && dbResp.data.length > 0) {
-          console.debug('[MediaSection] DB returned', dbResp.data.length, 'total rows');
-          console.debug('[MediaSection] Sample raw rows:', dbResp.data.slice(0, 3).map(r => ({
-            video_id: r.video_id,
-            title: r.title?.substring(0, 50),
-            duration: r.duration,
-            duration_seconds: r.duration_seconds,
-            published_at: r.published_at
+        if (error) {
+          console.warn('[MediaSection] DB query error:', error.message);
+        } else if (data && data.length > 0) {
+          console.debug('[MediaSection] DB returned', data.length, 'videos (with duration > 0)');
+          console.debug('[MediaSection] All videos in database:', data.map(v => ({
+            id: v.video_id,
+            title: v.title?.substring(0, 30),
+            duration_seconds: v.duration_seconds,
+            published_at: v.published_at?.substring(0, 10)
           })));
           
-          const vids = dbResp.data.map((it: any) => ({
+          const vids = data.map((it: any) => ({
             id: it.video_id,
             title: it.title,
             description: it.description,
             thumbnail_url: it.thumbnail_url || (it.video_id ? `https://img.youtube.com/vi/${it.video_id}/hqdefault.jpg` : ''),
             published_at: it.published_at,
-            duration: (it.duration_seconds !== undefined && it.duration_seconds !== null) ? it.duration_seconds : (it.duration || null),
+            duration: it.duration_seconds || 0,
+            duration_text: it.duration_text || null,
           }));
           
-          // Filter client-side: only videos with duration >= 300 seconds (5 minutes)
-          const filtered = vids.filter(v => {
-            const seconds = getDurationSeconds(v.duration);
-            const passes = seconds >= 300;
-            if (!passes && v.duration !== null) {
-              console.debug('[MediaSection] Filtered out:', v.id, 'duration:', v.duration, 'seconds:', seconds);
-            }
-            return passes;
-          });
+          // Filter for videos >= 5 minutes
+          const filtered = vids.filter(v => v.duration >= 300);
           
-          console.debug('[MediaSection] Filtered to', filtered.length, 'videos >= 5min');
-          console.debug('[MediaSection] Filtered videos:', filtered.slice(0, 3).map(f => ({
-            id: f.id,
-            title: f.title?.substring(0, 50),
-            duration: f.duration,
-            published_at: f.published_at
+          console.debug('[MediaSection] After 5-minute filter:', filtered.length, 'videos');
+          console.debug('[MediaSection] Filtered videos:', filtered.map(v => ({
+            id: v.id,
+            title: v.title?.substring(0, 30),
+            duration: v.duration
           })));
           
           setYoutubeVideos(filtered.slice(0, 12));
           setLatestVideo(filtered[0] || null);
           setLoadingYT(false);
           return;
-        } else if (dbResp.error) {
-          console.warn('[MediaSection] DB query error:', dbResp.error.message);
         }
       } catch (dbErr: any) {
         console.warn('Error querying youtube_videos table, falling back to sync endpoints:', dbErr?.message || dbErr);
@@ -157,7 +177,7 @@ const MediaSection = () => {
                 description: it.description,
                 thumbnail_url: it.thumbnail_url,
                 published_at: it.published_at,
-                duration: (it.duration_seconds !== undefined && it.duration_seconds !== null) ? it.duration_seconds : (it.duration_iso || null),
+                duration_seconds: typeof r.duration_seconds === 'number' ? r.duration_seconds : (r.duration ? Number(r.duration) : null),
               }));
               // enforce >= 300s on client as a safety net
               const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
@@ -256,6 +276,13 @@ const MediaSection = () => {
       syncYouTubeVideos().catch(err => {
         console.warn('[MediaSection] Periodic auto-sync failed:', err);
       });
+
+      // Also update existing video durations periodically
+      setTimeout(() => {
+        updateExistingVideoDurations().catch(err => {
+          console.warn('[MediaSection] Periodic duration update failed:', err);
+        });
+      }, 10000);
     }, 5 * 60 * 1000); // 5 minutes
     
     return () => clearInterval(syncInterval);
@@ -291,6 +318,8 @@ const MediaSection = () => {
           channel_id: CHANNEL_ID,
           persist: true,
           min_duration: 300,
+          limit: 100, // Fetch more videos to populate the database
+          fetch_all: true, // Fetch ALL videos from channel using YouTube API
         },
       });
 
@@ -303,6 +332,57 @@ const MediaSection = () => {
       }
     } catch (err: any) {
       console.error('[MediaSection] Sync exception:', err);
+    }
+  };
+
+  // Update duration information for existing videos in the database
+  const updateExistingVideoDurations = async () => {
+    try {
+      console.log('[MediaSection] Starting updateExistingVideoDurations...');
+
+      // First, fetch videos that don't have duration_seconds set OR have very low values (might be incorrect)
+      const { data: videosToUpdate, error: fetchError } = await supabase
+        .from('youtube_videos')
+        .select('video_id, title, duration_seconds')
+        .or('duration_seconds.is.null,duration_seconds.lt.300')
+        .limit(50);
+
+      if (fetchError) {
+        console.error('[MediaSection] Error fetching videos to update:', fetchError);
+        return;
+      }
+
+      console.log('[MediaSection] Videos needing updates:', videosToUpdate?.length || 0);
+      if (videosToUpdate && videosToUpdate.length > 0) {
+        console.log('[MediaSection] Videos to update:', videosToUpdate.map(v => `${v.video_id}: ${v.duration_seconds}s`));
+      }
+
+      if (!videosToUpdate || videosToUpdate.length === 0) {
+        console.log('[MediaSection] No videos found that need duration updates');
+        return;
+      }
+
+      // Call the Edge function with update mode for these specific videos
+      console.log('[MediaSection] Calling Edge function to update', videosToUpdate.length, 'videos');
+      const { data, error } = await supabase.functions.invoke('media-sync', {
+        body: {
+          channel_id: CHANNEL_ID,
+          persist: true,
+          min_duration: 0, // Include all videos for updating
+          video_ids: videosToUpdate.map(v => v.video_id), // Specific videos to update
+          update_existing: true, // Flag to indicate we're updating existing videos
+        },
+      });
+
+      if (error) {
+        console.error('[MediaSection] Update error:', error);
+      } else {
+        console.log('[MediaSection] Update response:', data);
+        // Refresh the list after update
+        setTimeout(() => fetchYouTubeVideos(), 2000);
+      }
+    } catch (err: any) {
+      console.error('[MediaSection] Update exception:', err);
     }
   };
 
@@ -386,85 +466,86 @@ const MediaSection = () => {
   };
 
   return (
-  <section className="bg-white py-20 relative overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 animate-fade-in">
-            <p className="text-2xl text-gray-700 leading-relaxed mb-6">
+  <section className="bg-white py-12 sm:py-16 lg:py-20 relative overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 sm:mb-16 animate-fade-in">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 leading-relaxed mb-4 sm:mb-6 px-2">
               Diary of an OFW is dedicated to capturing the raw, unfiltered journeys of Overseas Filipino Workers across the globe. We shine a light on the extraordinary achievements and untold stories of Filipinos who have carved out greatness far from home.
             </p>
-            <p className="text-2xl text-gray-700 leading-relaxed mb-6">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 leading-relaxed mb-4 sm:mb-6 px-2">
               Through intimate conversations with notable individuals—especially those thriving in foreign lands—we uncover hidden truths, life-changing lessons, and meaningful insights.
             </p>
-            <p className="text-2xl text-gray-800 leading-relaxed font-medium mb-12">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-800 leading-relaxed font-medium mb-8 sm:mb-12 px-2">
               Our mission is to inspire, uplift, and empower our audience to live with greater joy, purpose, and fulfillment by sharing the voices and victories of the global Filipino community.
             </p>
 
             {/* Add space between notes and image */}
-            <div className="mb-8" />
+            <div className="mb-6 sm:mb-8" />
 
 
           {/* YouTube Videos Section */}
           {/* OFW-themed hero photo */}
-          <div className="w-full mb-8">
-            <img 
-              src={ofwHeroPhoto} 
-              alt="OFW Hero" 
-              className="rounded-xl shadow-xl w-full h-64 sm:h-96 object-cover border border-gray-200 bg-white" 
-              style={{ display: 'block', width: '100%' }} 
+          <div className="w-full mb-6 sm:mb-8 px-2">
+            <img
+              src={ofwHeroPhoto}
+              alt="OFW Hero"
+              className="rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl w-full h-48 sm:h-64 lg:h-96 object-cover border border-gray-200 bg-white"
+              loading="lazy"
             />
           </div>
-          <div className="mb-12 text-left mt-10">
+          <div className="mb-8 sm:mb-12 text-left mt-6 sm:mt-10 px-2">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-800 mt-16">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-800 mt-8 sm:mt-16">
                 Most Popular Videos
               </h2>
             </div>
           </div>
-          <div className="w-full flex flex-col gap-8 mb-12">
+          <div className="w-full flex flex-col gap-6 sm:gap-8 mb-8 sm:mb-12 px-2">
             {loadingYT ? (
-              <div className="flex justify-center mb-8 w-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <div className="flex justify-center mb-6 sm:mb-8 w-full">
+                <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
               </div>
             ) : youtubeVideos.length > 0 ? (
               youtubeVideos.slice(0, 5).map((video) => (
-                <Card key={video.id} onClick={() => setPlayingVideoId(video.id)} className="overflow-hidden hover:shadow-xl transition-all duration-300 w-full bg-transparent cursor-pointer">
-                  <div className="flex flex-col md:flex-row w-full items-center md:items-start gap-8">
-                    <div className="w-full md:w-1/3 flex-shrink-0">
+                <Card key={video.id} onClick={() => setPlayingVideoId(video.id)} className="overflow-hidden hover:shadow-xl transition-all duration-300 w-full bg-transparent cursor-pointer border-0 shadow-none sm:shadow-sm sm:border">
+                  <div className="flex flex-col lg:flex-row w-full items-center lg:items-start gap-4 sm:gap-6 lg:gap-8 p-2 sm:p-4">
+                    <div className="w-full lg:w-1/3 flex-shrink-0">
                       <div className="relative rounded-lg overflow-hidden group">
                         <img
                           src={video.thumbnail_url}
                           alt={video.title}
-                          className="w-full h-52 object-cover rounded-lg block"
+                          className="w-full h-40 sm:h-48 lg:h-52 object-cover rounded-lg block"
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-3 rounded-full bg-white/90 group-hover:scale-110 group-hover:animate-pulse">
-                            <Play className="w-8 h-8 text-red-600" />
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-2 sm:p-3 rounded-full bg-white/90 group-hover:scale-110 group-hover:animate-pulse">
+                            <Play className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
                             <span className="sr-only">Play video</span>
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="w-full md:w-2/3 flex flex-col justify-center">
-                      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{video.title}</h3>
-                      <p className="text-lg text-muted-foreground mb-4">{video.description?.split('. ')[0] + (video.description?.includes('.') ? '.' : '')}</p>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                    <div className="w-full lg:w-2/3 flex flex-col justify-center">
+                      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">{video.title}</h3>
+                      <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">{video.description?.split('. ')[0] + (video.description?.includes('.') ? '.' : '')}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-2">
                         <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {formatDate(video.published_at)}
-                          {video.duration ? (
-                            <span className="ml-2 flex items-center text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="truncate">{formatDate(video.published_at)}</span>
+                          {video.duration_text || video.duration ? (
+                            <span className="ml-2 flex items-center text-xs text-muted-foreground flex-shrink-0">
                               <Clock className="w-3 h-3 mr-1" />
-                              {formatDuration(video.duration)}
+                              {video.duration_text || formatDuration(video.duration)}
                             </span>
                           ) : null}
                         </div>
-                        <div className="flex items-center gap-3">
-                            <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
-                              <FaYoutube className="w-12 h-12 drop-shadow-2xl bg-white p-2 rounded-full border-2 border-red-600" style={{ filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }} />
+                        <div className="flex items-center gap-2 sm:gap-3 justify-end">
+                            <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800 transition-colors">
+                              <FaYoutube className="w-8 h-8 sm:w-10 sm:w-12 sm:h-10 sm:h-12 drop-shadow-lg bg-white p-1.5 sm:p-2 rounded-full border-2 border-red-600 hover:scale-105 transition-transform" />
                             </a>
-                          <a href="https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800">
-                            <FaSpotify className="w-12 h-12 drop-shadow-2xl bg-white p-2 rounded-full border-2 border-green-600" style={{ filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.35))' }} />
+                          <a href="https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-800 transition-colors">
+                            <FaSpotify className="w-8 h-8 sm:w-10 sm:w-12 sm:h-10 sm:h-12 drop-shadow-lg bg-white p-1.5 sm:p-2 rounded-full border-2 border-green-600 hover:scale-105 transition-transform" />
                           </a>
                         </div>
                       </div>
@@ -473,15 +554,15 @@ const MediaSection = () => {
                 </Card>
               ))
             ) : (
-              <div className="w-full text-center text-muted-foreground flex flex-col items-center gap-4">
-                No videos available yet.
-                <div className="flex justify-center gap-6 mt-4">
-                  <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-red-600 hover:text-red-800 text-lg">
-                    <FaYoutube className="w-7 h-7 drop-shadow-lg" />
+              <div className="w-full text-center text-muted-foreground flex flex-col items-center gap-4 px-2">
+                <p className="text-sm sm:text-base">No videos available yet.</p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mt-4">
+                  <a href="https://www.youtube.com/@diaryofanofw" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-red-600 hover:text-red-800 text-sm sm:text-lg transition-colors">
+                    <FaYoutube className="w-5 h-5 sm:w-7 sm:h-7 drop-shadow-lg" />
                     YouTube
                   </a>
-                  <a href="https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 text-lg">
-                    <Play className="w-7 h-7" />
+                  <a href="https://open.spotify.com/show/5oJDj8gVSPa87Mds6Oe9ty" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 text-sm sm:text-lg transition-colors">
+                    <Play className="w-5 h-5 sm:w-7 sm:h-7" />
                     Spotify
                   </a>
                 </div>
@@ -491,8 +572,8 @@ const MediaSection = () => {
 
           {/* Video player modal */}
           <Dialog open={!!playingVideoId} onOpenChange={(open) => { if (!open) setPlayingVideoId(null); }}>
-            <DialogContent className="max-w-4xl w-full">
-              <DialogTitle>Playing video</DialogTitle>
+            <DialogContent className="max-w-4xl w-full mx-4">
+              <DialogTitle className="text-lg sm:text-xl">Playing video</DialogTitle>
               {playingVideoId ? (
                 <div className="w-full mt-4">
                   <div style={{ position: 'relative', paddingTop: '56.25%' }}>

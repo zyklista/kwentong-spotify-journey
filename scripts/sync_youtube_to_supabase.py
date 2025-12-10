@@ -20,6 +20,7 @@ Environment variables:
 import os
 import sys
 import urllib.request
+import urllib.error
 import urllib.parse
 import json
 import time
@@ -30,8 +31,18 @@ DEFAULT_CHANNEL = 'UCANMUQ39X4PcnUENrxFocbw'
 def fetch_rss(channel_id: str, timeout=15) -> List[Dict]:
     url = f'https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}'
     req = urllib.request.Request(url, headers={'User-Agent': 'kwentong-media-sync/1.0'})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = resp.read()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = resp.read()
+    except urllib.error.URLError as e:
+        # Provide an explicit, actionable error message for network/DNS issues
+        print(f"Network error while fetching RSS ({url}): {e}", file=sys.stderr)
+        print("Possible causes: no internet access from this environment, DNS failure, or proxy/firewall blocking outbound requests.", file=sys.stderr)
+        print("Quick checks:", file=sys.stderr)
+        print("  - Can you `curl https://www.youtube.com/feeds/videos.xml?channel_id=...` from this machine?", file=sys.stderr)
+        print("  - Check environment proxy vars: $http_proxy $https_proxy", file=sys.stderr)
+        print("  - Check /etc/resolv.conf for DNS servers", file=sys.stderr)
+        sys.exit(1)
     # Simple, minimal parsing using string operations / basic xml parsing
     text = data.decode('utf-8')
     entries = text.split('<entry>')[1:]
@@ -127,7 +138,13 @@ def upsert_to_supabase(rows: List[Dict], supabase_url: str, service_role_key: st
     req = urllib.request.Request(endpoint, data=body, headers=headers, method='POST')
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
-            return json.load(resp)
+            raw = resp.read().decode('utf-8', errors='ignore')
+            try:
+                parsed = json.loads(raw)
+            except Exception:
+                parsed = raw
+            # show status via resp.getcode()
+            return {'status': resp.getcode(), 'body': parsed}
     except urllib.error.HTTPError as he:
         msg = he.read().decode('utf-8', errors='ignore')
         raise RuntimeError(f'Supabase upsert failed {he.code}: {msg}')
@@ -147,6 +164,7 @@ def main():
 
     print('Fetching RSS for channel', channel)
     items = fetch_rss(channel)
+    print(f'Fetched {len(items)} items from RSS')
     if limit > 0:
         items = items[:limit]
     if not items:
@@ -199,11 +217,28 @@ def main():
         print('No rows to upsert after filtering')
         return
 
+    # Verbose output for diagnostics
+    print(f'Prepared {len(rows)} rows for upsert. Sample ids: {[r["video_id"] for r in rows[:10]]}')
+    # Respect dry run / no persist env var for testing
+    dry = os.getenv('DRY_RUN', '').lower() in ('1', 'true', 'yes') or os.getenv('PERSIST', '').lower() in ('0', 'false', 'no')
+    if dry:
+        print('DRY RUN enabled - skipping actual upsert. Showing payload preview:')
+        try:
+            print(json.dumps({'rows': rows[:20]}, indent=2, ensure_ascii=False))
+        except Exception:
+            print(rows[:20])
+        return
+
     print(f'Upserting {len(rows)} rows to Supabase')
     res = upsert_to_supabase(rows, supabase_url, supabase_key)
     print('Upsert response preview:')
     try:
-        print(json.dumps(res if isinstance(res, dict) else {'rows': res}, indent=2, ensure_ascii=False))
+        # upsert_to_supabase now returns {'status': code, 'body': parsed}
+        if isinstance(res, dict) and 'status' in res:
+            print(f"HTTP status: {res['status']}")
+            print(json.dumps(res.get('body', {}), indent=2, ensure_ascii=False))
+        else:
+            print(json.dumps(res if isinstance(res, dict) else {'rows': res}, indent=2, ensure_ascii=False))
     except Exception:
         print(res)
 
