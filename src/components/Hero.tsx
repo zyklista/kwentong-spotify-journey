@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/ofw-hero.jpg";
 
 const Hero = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   return (
     <section className="relative min-h-screen overflow-hidden">
@@ -53,7 +55,7 @@ const Hero = () => {
               <Button
                 size={isMobile ? "default" : "lg"}
                 className={`rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold transition-all duration-300 hover:scale-105 ${isMobile ? 'text-sm px-6 py-4 w-full' : 'text-lg px-8 py-6'}`}
-                onClick={() => { window.location.href = '/connect'; }}
+                onClick={() => navigate('/connect')}
               >
                 <Users className={`mr-2 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                 Share Your Story
