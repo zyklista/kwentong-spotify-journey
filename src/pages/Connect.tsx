@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Mail, Phone, MapPin } from "lucide-react";
-import bgImage from "@/assets/3d-geometric-bg.jpg";
 
 const SERVICE_OPTIONS = [
   { value: "full-stack-web-development", label: "Full Stack Web Development" },
@@ -35,63 +34,176 @@ function ContactForm() {
     setLoading(true);
     setError("");
     setSuccess(false);
+
+    // Frontend validation - ensure all fields are filled
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.service || !form.message.trim()) {
+      setError("Please fill in all required fields.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase
-        .from("contact_submissions")
-        .insert([
-          {
-            name: form.name,
-            email: form.email,
-            phone: form.phone,
-            service: form.service,
-            message: form.message,
-          },
-        ]);
-      if (!error) {
-        setSuccess(true);
-        setForm({ name: "", email: "", phone: "", service: SERVICE_OPTIONS[0].value, message: "" });
-      } else {
-        setError(error.message || "Submission failed. Please try again.");
+      // Log the data being sent for debugging
+      console.log('Sending form data:', {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        service: form.service,
+        message: form.message,
+      });
+
+      // Call the Edge Function directly using fetch for anonymous access
+      const supabaseUrl = "https://yvmqcqrewqvwroxinzvn.supabase.co";
+      const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc";
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/contact_submissions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          service: form.service,
+          message: form.message.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Edge Function error:', data);
+        throw new Error(data.error || 'Failed to submit form');
       }
+
+      if (!data.success) {
+        console.error('Function response error:', data);
+        throw new Error(data.error || 'Form submission failed');
+      }
+
+      // Success
+      setSuccess(true);
+      setForm({ name: "", email: "", phone: "", service: SERVICE_OPTIONS[0].value, message: "" });
     } catch (err) {
-      setError("Network error. Please try again.");
+      console.error('Form submission error:', err);
+      // More specific error messages
+      if (err.message?.includes('JWT') || err.message?.includes('401')) {
+        setError("Authentication error. Please refresh the page and try again.");
+      } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError(`Error: ${err.message || "Something went wrong. Please try again."}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-12 space-y-8">
-  <h2 className="text-3xl font-bold text-center mb-2 font-sans text-gray-800">Tell us about your needs</h2>
-  <p className="text-xl text-center text-gray-600 italic mb-2 font-sans font-normal">Specify your requirements, project, or questions below.</p>
-  <p className="text-xl text-center text-gray-600 italic mb-6 font-sans font-normal">Our team will review your inquiry and get back to you within <span className="font-bold">72 hours</span>.</p>
-      <div>
-        <label className="block mb-1 font-medium">Full Name</label>
-        <input name="name" value={form.name} onChange={handleChange} required className="w-full border rounded px-3 py-2" placeholder="Your full name" />
+    <form onSubmit={handleSubmit} className="max-w-5xl mx-auto bg-gradient-to-br from-white via-slate-50 to-white rounded-3xl shadow-2xl p-8 lg:p-16 space-y-6 border border-gray-100">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl lg:text-5xl font-extrabold mb-6 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent tracking-tight">Tell Us About Your Needs</h2>
+        <p className="text-lg text-gray-700 mb-3 leading-relaxed max-w-3xl mx-auto">Share your requirements, project details, or any questions you have. Whether it's web development, app creation, or interview opportunities—we're here to help bring your vision to life.</p>
+        <p className="text-base text-gray-600 leading-relaxed">Our team reviews every inquiry personally and will respond within <span className="font-bold text-primary">72 hours</span>.</p>
       </div>
-      <div>
-        <label className="block mb-1 font-medium">Email</label>
-        <input name="email" type="email" value={form.email} onChange={handleChange} required className="w-full border rounded px-3 py-2" placeholder="Your email address" />
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Full Name *</label>
+          <input 
+            name="name" 
+            value={form.name} 
+            onChange={handleChange} 
+            required 
+            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all hover:border-gray-300 shadow-sm" 
+            placeholder="John Doe" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Email Address *</label>
+          <input 
+            name="email" 
+            type="email" 
+            value={form.email} 
+            onChange={handleChange} 
+            required 
+            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all hover:border-gray-300 shadow-sm" 
+            placeholder="john@example.com" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Phone Number *</label>
+          <input 
+            name="phone" 
+            value={form.phone} 
+            onChange={handleChange} 
+            required 
+            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all hover:border-gray-300 shadow-sm" 
+            placeholder="+420 123 456 789" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Service Type *</label>
+          <select 
+            name="service" 
+            value={form.service} 
+            onChange={handleChange} 
+            className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all hover:border-gray-300 shadow-sm cursor-pointer"
+          >
+            {SERVICE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </div>
       </div>
-      <div>
-        <label className="block mb-1 font-medium">Phone Number</label>
-        <input name="phone" value={form.phone} onChange={handleChange} required className="w-full border rounded px-3 py-2" placeholder="Your phone number" />
+
+      <div className="space-y-2">
+        <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide">Your Message *</label>
+        <textarea 
+          name="message" 
+          value={form.message} 
+          onChange={handleChange} 
+          required 
+          className="w-full bg-white border-2 border-gray-200 rounded-xl px-5 py-4 text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all hover:border-gray-300 shadow-sm resize-none" 
+          rows={6} 
+          placeholder="Tell us about your project, requirements, or any questions you have..." 
+        />
       </div>
-      <div>
-        <label className="block mb-1 font-medium">Service</label>
-        <select name="service" value={form.service} onChange={handleChange} className="w-full border rounded px-3 py-2">
-          {SERVICE_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-        </select>
+
+      <div className="pt-4">
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-white font-extrabold px-8 py-5 rounded-2xl text-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg uppercase tracking-wide"
+        >
+          {loading ? "Sending Your Message..." : "Send Message"}
+        </button>
       </div>
-      <div>
-        <label className="block mb-1 font-medium">Message</label>
-        <textarea name="message" value={form.message} onChange={handleChange} required className="w-full border rounded px-3 py-2" rows={4} placeholder="Tell us about your needs or project" />
-      </div>
-      <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-6 py-2 rounded">
-        {loading ? "Sending..." : "Send Message"}
-      </button>
-      {success && <div className="text-green-600 mt-2">Thank you! Your message has been sent. We'll get back to you within 72 hours.</div>}
-      {error && <div className="text-red-600 mt-2">{error}</div>}
+
+      {success && (
+        <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6 text-center">
+          <p className="text-green-700 font-bold text-lg mb-2">✓ Message Sent Successfully!</p>
+          <p className="text-green-600">Thank you! We'll get back to you within 72 hours.</p>
+        </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 text-center">
+          <p className="text-red-700 font-bold text-lg mb-2">⚠ Error</p>
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
     </form>
   );
 }
@@ -112,16 +224,17 @@ const Connect = () => {
     }]
   };
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-white">
       <Header />
-      <main className="py-16">
-        <h1 className="text-4xl font-bold text-center mb-8">Let us know how can we help you</h1>
-        <div className="flex justify-center mb-8">
-          <img
-            src={bgImage}
-            alt="OFW IT Professionals and Promoters"
-            className="rounded-xl shadow-lg w-full max-w-2xl h-64"
-            style={{ objectFit: "cover" }}
+      <main className="py-20 lg:py-28 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h1 className="text-4xl lg:text-6xl font-extrabold text-center mb-16 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent tracking-tight">Let Us Know How We Can Help You</h1>
+          <div className="flex justify-center mb-12">
+            <img
+              src="/services.png"
+              alt="OFW IT Professionals and Promoters"
+              className="rounded-2xl shadow-2xl w-full max-w-4xl h-80 lg:h-96 border border-gray-100"
+              style={{ objectFit: "cover" }}
             loading="lazy"
             decoding="async"
             onError={(e) => {
@@ -131,44 +244,91 @@ const Connect = () => {
               // Inline SVG fallback avoids needing an extra file
               t.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="24">Image unavailable</text></svg>';
             }}
-          />
-        </div>
-        <p className="text-2xl text-center text-gray-800 mb-10 max-w-3xl mx-auto font-semibold leading-relaxed font-sans">
-          We offer a range of digital services to support your journey.<br />
-          Fill out the form below to request a free consultation tailored to your needs.<br />
-        </p>
-        <ul className="max-w-2xl mx-auto mb-10 text-2xl text-muted-foreground list-disc pl-8 font-semibold font-sans">
-          <li><strong>Full Stack Web Development:</strong> <span className="font-normal">Build modern, scalable websites and web apps from scratch.</span></li>
-          <li><strong>Web Renovation & Migration:</strong> <span className="font-normal">Upgrade, redesign, or migrate your existing site to new platforms.</span></li>
-          <li><strong>Mobile App Development:</strong> <span className="font-normal">Create engaging mobile experiences for iOS and Android.</span></li>
-          <li><strong>Advertising:</strong> <span className="font-normal">Boost your brand with digital marketing and ad campaigns.</span></li>
-          <li><strong>Interview Guesting:</strong> <span className="font-normal">Feature your story or expertise in our podcast and media channels.</span></li>
-          <li><strong>Others:</strong> <span className="font-normal">Custom solutions for unique business or personal needs.</span></li>
-        </ul>
-        <ContactForm />
-
-        {/* Contact details */}
-        <section className="py-16 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <h2 className="text-3xl font-bold text-center mb-6">Contact Details</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl shadow p-6 text-center">
-                <Mail className="mx-auto mb-3 w-8 h-8 text-primary" />
-                <h3 className="font-semibold text-lg mb-2">Email</h3>
-                <a href="mailto:info@diaryofanofw.com" className="text-primary hover:underline">info@diaryofanofw.com</a>
+            />
+          </div>
+          
+          <div className="text-center mb-16">
+            <p className="text-xl lg:text-2xl text-gray-800 mb-6 max-w-4xl mx-auto leading-relaxed font-medium">
+              We offer a comprehensive range of digital services to empower your business and amplify your story. From cutting-edge web development to strategic advertising and media opportunities—we're your partner in success.
+            </p>
+            <p className="text-lg text-gray-600 mb-0 max-w-3xl mx-auto leading-relaxed">
+              Fill out the form below to request a <span className="font-bold text-primary">free consultation</span> tailored to your specific needs.
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-8 lg:p-12 mb-16 max-w-5xl mx-auto border border-gray-100">
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-center mb-12 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent tracking-tight">Our Services</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Full Stack Web Development</h3>
+                  <p className="text-gray-600 text-base">Build modern, scalable websites and web applications from the ground up.</p>
+                </div>
               </div>
-              <div className="bg-white rounded-xl shadow p-6 text-center">
-                <Phone className="mx-auto mb-3 w-8 h-8 text-primary" />
-                <h3 className="font-semibold text-lg mb-2">Phone</h3>
-                <a href="tel:+420774900384" className="text-primary hover:underline">+420 774 900 384</a>
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Web Renovation & Migration</h3>
+                  <p className="text-gray-600 text-base">Upgrade, redesign, or migrate your existing site to cutting-edge platforms.</p>
+                </div>
               </div>
-              <div className="bg-white rounded-xl shadow p-6 text-center">
-                <MapPin className="mx-auto mb-3 w-8 h-8 text-primary" />
-                <h3 className="font-semibold text-lg mb-2">Office</h3>
-                <address className="not-italic text-gray-700">Czech Republic (Central Europe)<br/>Diary of an OFW</address>
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Mobile App Development</h3>
+                  <p className="text-gray-600 text-base">Create engaging, user-friendly mobile experiences for iOS and Android.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Advertising</h3>
+                  <p className="text-gray-600 text-base">Boost your brand visibility with strategic digital marketing and targeted ad campaigns.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Interview Guesting</h3>
+                  <p className="text-gray-600 text-base">Share your inspiring story or expertise on our podcast and media channels.</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-4 p-4 rounded-lg hover:bg-slate-50 transition-colors">
+                <span className="text-2xl text-primary font-bold">→</span>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-xl lg:text-2xl mb-2">Custom Solutions</h3>
+                  <p className="text-gray-600 text-base">Tailored services designed for your unique business or personal goals.</p>
+                </div>
               </div>
             </div>
-            <p className="text-center text-sm text-muted-foreground mt-6">For media inquiries, partnerships, or urgent matters, please include "URGENT" in the subject line.</p>
+          </div>
+          
+          <ContactForm />
+        </div>
+
+        {/* Contact details */}
+        <section className="py-20 lg:py-28 px-4 bg-gradient-to-b from-slate-50 to-white">
+          <div className="container mx-auto max-w-5xl">
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-center mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent tracking-tight">Contact Details</h2>
+            <p className="text-center text-gray-600 mb-12 text-lg">We're here to answer your questions and bring your ideas to life</p>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <Mail className="mx-auto mb-4 w-12 h-12 text-primary" />
+                <h3 className="font-bold text-xl mb-3 text-gray-900">Email</h3>
+                <a href="mailto:info@diaryofanofw.com" className="text-primary hover:text-accent font-semibold transition-colors">info@diaryofanofw.com</a>
+              </div>
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <Phone className="mx-auto mb-4 w-12 h-12 text-primary" />
+                <h3 className="font-bold text-xl mb-3 text-gray-900">Phone</h3>
+                <a href="tel:+420774900384" className="text-primary hover:text-accent font-semibold transition-colors">+420 774 900 384</a>
+              </div>
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-gray-100">
+                <MapPin className="mx-auto mb-4 w-12 h-12 text-primary" />
+                <h3 className="font-bold text-xl mb-3 text-gray-900">Office</h3>
+                <address className="not-italic text-gray-700 font-medium">Czech Republic<br/>(Central Europe)<br/>Diary of an OFW</address>
+              </div>
+            </div>
+            <p className="text-center text-base text-gray-500 mt-10 leading-relaxed">For media inquiries, partnerships, or urgent matters, please include <span className="font-bold text-primary">"URGENT"</span> in the subject line.</p>
           </div>
         </section>
         {/* Structured data for SEO */}

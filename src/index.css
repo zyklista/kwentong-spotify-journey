@@ -4,6 +4,14 @@
 
 /* Performance optimizations */
 @layer base {
+  /* Safe area insets for notched devices (iPhone, iPad Pro, etc.) */
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+
   /* Optimize font loading */
   @font-face {
     font-family: 'Inter';
@@ -27,6 +35,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    overscroll-behavior: none; /* Prevent pull-to-refresh on mobile */
   }
 
   /* Optimize images */
@@ -39,6 +48,7 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
   }
 
   /* Better focus styles for accessibility */
@@ -127,6 +137,35 @@
   @media (min-width: 1280px) {
     .container-fluid {
       max-width: 1400px;
+    }
+  }
+
+  /* Safe area utilities for notched devices */
+  .safe-top {
+    padding-top: max(1rem, var(--sat));
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, var(--sab));
+  }
+
+  .safe-left {
+    padding-left: max(1rem, var(--sal));
+  }
+
+  .safe-right {
+    padding-right: max(1rem, var(--sar));
+  }
+
+  /* Smooth scroll for iOS */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  @supports (-webkit-touch-callout: none) {
+    input, select, textarea {
+      font-size: 16px !important;
     }
   }
 }

@@ -1,93 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://diaryofanofw.com/</loc>
-    
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog</loc>
-    
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/connect</loc>
-    
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://diaryofanofw.com/survey</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://diaryofanofw.com/our-story</loc>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/starting-your-journey</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/handling-homesickness</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/financial-planning</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/skills-development</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/staying-connected</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/cultural-adaptation</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/entrepreneurship</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/healthcare-heroes</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/work-life-balance</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/coming-home</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/career-growth</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/legal-guide</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/mental-health</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/language-learning</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://diaryofanofw.com/blog/middle-east-success-stories</loc>
-    <lastmod>2025-11-08T10:27:50.513Z</lastmod>
+    <lastmod>2025-12-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>

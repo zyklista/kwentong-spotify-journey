@@ -14,9 +14,11 @@ const Hero = () => {
           src={heroImage}
           alt="OFW Community"
           className="w-full h-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
-  <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-accent/30 to-primary/10" />
-  <div className="absolute inset-0 bg-black/30" />
+  <div className="absolute inset-0 bg-black/40" />
       </div>
 
       <div className="container mx-auto px-4 py-16 sm:py-20 relative z-10">
@@ -27,13 +29,14 @@ const Hero = () => {
                 <Heart className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
                 ito ang kwento nyo
               </div>
-              <h1 className={`font-bold text-primary-foreground leading-tight ${isMobile ? 'text-3xl' : 'text-5xl lg:text-7xl'}`}> 
-                Diary of an
-                <span className="block bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
+              <h1 className={`font-extrabold text-white leading-[0.95] tracking-tight ${isMobile ? 'text-5xl' : 'text-7xl lg:text-[7rem]'}`}> 
+                <span className="text-white">Diary</span>{' '}
+                <span className="text-white">of an</span>
+                <span className="block text-white mt-2">
                   OFW
                 </span>
               </h1>
-              <p className={`text-primary-foreground/90 mx-auto leading-relaxed ${isMobile ? 'text-base max-w-xs' : 'text-xl lg:text-2xl max-w-2xl'}`}> 
+              <p className={`text-white/95 mx-auto leading-relaxed font-medium ${isMobile ? 'text-lg max-w-sm' : 'text-2xl lg:text-3xl max-w-3xl'}`} style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.5)' }}> 
                 Share your journey, connect with fellow Filipinos abroad, and inspire others with your stories of courage, sacrifice, and triumph.
               </p>
             </div>

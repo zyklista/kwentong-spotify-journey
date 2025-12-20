@@ -33,18 +33,37 @@ const preloadCriticalResources = () => {
 // Initialize performance optimizations
 preloadCriticalResources();
 
-// Register service worker for caching
+// Register service worker for PWA functionality and offline caching
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
+        
+        // Check for updates periodically
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000); // Check every hour
       })
       .catch((registrationError) => {
         console.log('SW registration failed: ', registrationError);
       });
   });
 }
+
+// PWA Install Prompt - for app-like experience
+let deferredPrompt: any;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('PWA install prompt available');
+});
+
+// Track if user installs the app
+window.addEventListener('appinstalled', () => {
+  console.log('PWA was installed');
+  deferredPrompt = null;
+});
 
 // Loading fallback component
 const LoadingFallback = () => (

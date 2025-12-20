@@ -3,17 +3,15 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SurveyWidget from "@/components/SurveyWidget";
-import SurveyResponses from "@/components/SurveyResponses";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Survey = () => {
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<'form' | 'responses'>('form');
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
   <main className={`container mx-auto ${isMobile ? 'px-4 py-16' : 'px-6 py-24'}`}>
         {/* Page Header */}
         <div className={`text-center mb-8 ${isMobile ? 'mb-6' : ''}`}>
@@ -25,17 +23,9 @@ const Survey = () => {
           </p>
         </div>
 
-        {/* Tab Navigation removed for cleaner layout */}
-
-        {/* Content */}
-        <div className="min-h-[500px]">
-          {activeTab === 'form' ? (
-            <div className="flex justify-center mt-12">
-              <SurveyWidget />
-            </div>
-          ) : (
-            <SurveyResponses />
-          )}
+        {/* Survey Form */}
+        <div className="flex justify-center">
+          <SurveyWidget />
         </div>
       </main>
 

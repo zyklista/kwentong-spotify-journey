@@ -3,7 +3,6 @@ import { Play, Calendar, Clock } from "lucide-react";
 import { FaYoutube, FaSpotify } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import ofwHeroPhoto from '@/assets/ofw-hero-photo.jpg';
 import { parseYoutubeRss } from "@/utils/parseYoutubeRss";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -59,8 +58,8 @@ const MediaSection = () => {
         .channel('youtube_videos_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'youtube_videos' }, (payload) => {
           const row = (payload as any).new;
-          // TEMPORARILY: Add videos that have any duration_seconds > 0 for debugging
-          if (row?.duration_seconds > 0) {
+          // Only add videos that are 5 minutes or longer (300 seconds)
+          if (row?.duration_seconds >= 300) {
             const mapped = {
               id: row.video_id,
               title: row.title,
@@ -88,12 +87,12 @@ const MediaSection = () => {
         })
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'youtube_videos' }, (payload) => {
           const row = (payload as any).new;
-          // TEMPORARILY: Update videos that have any duration_seconds > 0
-          if (row?.duration_seconds > 0) {
+          // Only update videos that are 5 minutes or longer (300 seconds)
+          if (row?.duration_seconds >= 300) {
             console.log('[MediaSection] Realtime UPDATE:', row.video_id, row.duration_seconds, 'seconds');
             setYoutubeVideos(prev => prev.map(v => v.id === row.video_id ? ({ ...v, duration: row.duration_seconds ?? row.duration ?? v.duration, duration_text: row.duration_text || v.duration_text }) : v));
           } else {
-            // Remove videos that no longer have duration info
+            // Remove videos that are now shorter than 5 minutes
             setYoutubeVideos(prev => prev.filter(v => v.id !== row.video_id));
           }
         })
@@ -114,11 +113,11 @@ const MediaSection = () => {
       // First, prefer persisted videos from Supabase if available.
       try {
         console.debug('[MediaSection] Attempting Supabase query...');
-        // TEMPORARILY: Show all videos with duration_seconds > 0 to debug what's in database
+        // Filter for videos that are 5 minutes or longer (300 seconds)
         const { data, error } = await supabase
           .from('youtube_videos')
           .select('*')
-          .gt('duration_seconds', 0)
+          .gte('duration_seconds', 300)
           .order('published_at', { ascending: false })
           .limit(50);
         
@@ -177,7 +176,7 @@ const MediaSection = () => {
                 description: it.description,
                 thumbnail_url: it.thumbnail_url,
                 published_at: it.published_at,
-                duration_seconds: typeof r.duration_seconds === 'number' ? r.duration_seconds : (r.duration ? Number(r.duration) : null),
+                duration_seconds: typeof it.duration_seconds === 'number' ? it.duration_seconds : (it.duration ? Number(it.duration) : null),
               }));
               // enforce >= 300s on client as a safety net
               const filtered = videos.filter(v => getDurationSeconds(v.duration) >= 300);
@@ -485,18 +484,21 @@ const MediaSection = () => {
 
 
           {/* YouTube Videos Section */}
-          {/* OFW-themed hero photo */}
+          {/* Inspiring OFW success and Filipino diaspora photo */}
           <div className="w-full mb-6 sm:mb-8 px-2">
             <img
-              src={ofwHeroPhoto}
-              alt="OFW Hero"
-              className="rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl w-full h-48 sm:h-64 lg:h-96 object-cover border border-gray-200 bg-white"
+              src="/mediasection.png"
+              alt="Asian Professional Working in Europe - Filipino Success Story in International Career"
+              className="rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl w-full h-48 sm:h-64 lg:h-96 object-cover object-center border border-gray-200 bg-white"
               loading="lazy"
+              decoding="async"
+              width="1200"
+              height="384"
             />
           </div>
-          <div className="mb-8 sm:mb-12 text-left mt-6 sm:mt-10 px-2">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-800 mt-8 sm:mt-16">
+          <div className="mb-8 sm:mb-12 text-center mt-6 sm:mt-10 px-2">
+            <div className="flex items-center justify-center mb-4">
+              <h2 className="text-4xl lg:text-6xl font-extrabold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent tracking-tight mt-8 sm:mt-16">
                 Most Popular Videos
               </h2>
             </div>
@@ -517,6 +519,9 @@ const MediaSection = () => {
                           alt={video.title}
                           className="w-full h-40 sm:h-48 lg:h-52 object-cover rounded-lg block"
                           loading="lazy"
+                          decoding="async"
+                          width="480"
+                          height="360"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-2 sm:p-3 rounded-full bg-white/90 group-hover:scale-110 group-hover:animate-pulse">

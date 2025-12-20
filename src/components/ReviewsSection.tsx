@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 const ReviewsSection = () => {
   const isMobile = useIsMobile();
   
@@ -30,25 +31,25 @@ const ReviewsSection = () => {
   
     const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
   
-  return <section className="bg-white py-12 relative overflow-hidden">
+  return <section className="bg-gradient-to-b from-white to-slate-50 py-16 lg:py-24 relative overflow-hidden">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className={`text-center ${isMobile ? 'mb-8' : 'mb-16'}`}>
-          <div className={`inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full font-medium mb-4 ${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}`}>
-            <Star className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
+        <div className={`text-center ${isMobile ? 'mb-10' : 'mb-16'}`}>
+          <div className={`inline-flex items-center gap-2 bg-primary/15 text-primary rounded-full font-bold mb-6 ${isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3 text-base'}`}>
+            <Star className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
             Client Reviews
           </div>
-          <div className={`flex items-center justify-center gap-2 mb-4 ${isMobile ? 'flex-col' : ''}`}>
+          <div className={`flex items-center justify-center gap-3 mb-6 ${isMobile ? 'flex-col' : ''}`}>
             <div className="flex gap-1">
               {renderStars(Math.round(averageRating))}
             </div>
-            <div className={`flex items-center gap-2 ${isMobile ? 'mt-2' : 'ml-2'}`}>
-              <span className={`font-semibold ${isMobile ? 'text-lg' : 'text-xl'}`}>{averageRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">({reviews.length} reviews)</span>
+            <div className={`flex items-center gap-3 ${isMobile ? 'mt-2' : 'ml-2'}`}>
+              <span className={`font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent ${isMobile ? 'text-2xl' : 'text-3xl'}`}>{averageRating.toFixed(1)}</span>
+              <span className="text-gray-600 font-medium">({reviews.length} reviews)</span>
             </div>
           </div>
-            <p className={`text-muted-foreground mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'}`}>
-              Read what our clients have to say about their experiences and the support they've received from our team.
+            <p className={`text-gray-600 mx-auto leading-relaxed ${isMobile ? 'text-base max-w-sm' : 'text-xl max-w-3xl'}`}>
+              Read what our community members have to say about their experiences and the support they've received.
             </p>
         </div>
 
@@ -75,9 +76,11 @@ const ReviewsSection = () => {
 
         {/* Rate Us Button */}
         <div className="flex justify-center mt-8">
-          <a href="/survey" className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-8 py-3 rounded-full text-lg shadow transition">
-            Leave a Review
-          </a>
+          <Link to="/survey">
+            <button className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-8 py-3 rounded-full text-lg shadow transition">
+              Leave a Review
+            </button>
+          </Link>
         </div>
 
           {/* Reviews note added above. No call to action below. */}

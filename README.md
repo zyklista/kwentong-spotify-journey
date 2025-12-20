@@ -1,53 +1,227 @@
-# Supabase CLI
+# Diary of an OFW - Kwentong Spotify Journey
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+A comprehensive web platform for Overseas Filipino Workers (OFW) featuring podcasts, blogs, resources, and community support.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+## 🚀 Project Overview
 
-This repository contains all the functionality for Supabase CLI.
+This is a modern React/TypeScript application built with:
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn/ui components
+- **Backend**: Supabase (Database + Edge Functions)
+- **Deployment**: Vercel
+- **Content**: Spotify podcast integration, YouTube videos, blog posts
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+## 📁 Project Structure
 
-## Getting started
+```
+kwentong-spotify-journey/
+├── api/                          # Vercel serverless functions
+│   └── contact-brevo.js         # Legacy contact form handler
+├── public/                       # Static assets
+│   ├── robots.txt
+│   ├── site.webmanifest
+│   └── sitemap.xml
+├── scripts/                      # Build and deployment scripts
+│   ├── deploy-media-sync.sh
+│   ├── generate-sitemap.js
+│   └── sync_youtube_to_supabase.py
+├── src/
+│   ├── assets/                   # Images and media files
+│   ├── components/               # Reusable UI components
+│   │   ├── ui/                  # Shadcn/ui components
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── ...
+│   ├── hooks/                   # Custom React hooks
+│   ├── integrations/            # External service integrations
+│   │   └── supabase/
+│   ├── lib/                     # Utility libraries
+│   ├── pages/                   # Route components
+│   │   ├── blog/               # Blog post pages
+│   │   ├── Index.tsx
+│   │   ├── Connect.tsx
+│   │   └── ...
+│   ├── utils/                   # Utility functions
+│   └── App.tsx                  # Main app component
+├── supabase/
+│   ├── functions/               # Edge Functions
+│   │   └── contact_submissions/ # Contact form handler
+│   └── migrations/              # Database migrations
+└── package.json                 # Dependencies and scripts
+```
 
-### Install the CLI
+## 🛠️ Key Features
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+### Frontend Components
+- **Header/Navigation**: Responsive navigation with mobile menu
+- **Hero Section**: Main landing area with call-to-action
+- **Media Integration**: Spotify podcast and YouTube video embeds
+- **Blog System**: Dynamic blog posts with routing
+- **Contact Forms**: Multiple contact forms with validation
+- **SEO Optimized**: Meta tags, structured data, sitemaps
+
+### Backend Services
+- **Supabase Database**: PostgreSQL database for content and forms
+- **Edge Functions**: Serverless functions for form processing
+- **Email Integration**: Brevo (Sendinblue) for marketing emails
+- **Media Sync**: Automated content synchronization
+
+## 🔧 Setup & Development
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase CLI
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd kwentong-spotify-journey
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment setup**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Supabase credentials
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+## 🚀 Deployment
+
+### Vercel Deployment
+```bash
+npm run build
+# Deploy to Vercel
+```
+
+### Supabase Setup
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Link to your project
+supabase link --project-ref your-project-ref
+
+# Deploy Edge Functions
+supabase functions deploy contact_submissions
+```
+
+## 📊 Database Schema
+
+### Tables
+- `contact_submissions` - Contact form submissions
+- `blog_posts` - Blog content
+- `media_content` - Spotify/YouTube content
+- `survey_responses` - User survey data
+
+## 🔒 Environment Variables
+
+```env
+# Supabase
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
+
+# Email Marketing
+BREVO_API_KEY=your-brevo-api-key
+
+# Analytics (optional)
+GOOGLE_ANALYTICS_ID=your-ga-id
+```
+
+## 🎯 Available Scripts
 
 ```bash
-npm i supabase --save-dev
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm run preview         # Preview production build
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix linting issues
+npm run type-check      # TypeScript type checking
+
+# Content Management
+npm run sitemap         # Generate sitemap
 ```
 
-To install the beta release channel:
+## 🌐 Routes & Pages
 
-```bash
-npm i supabase@beta --save-dev
-```
+- `/` - Homepage with hero, media, blogs
+- `/connect` - Contact page with service inquiry form
+- `/our-story` - About page
+- `/blog` - Blog listing page
+- `/blog/[slug]` - Individual blog posts
+- `/survey` - User feedback survey
+- `/privacy` - Privacy policy
+- `/terms` - Terms and conditions
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+## 🔧 Edge Functions
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+### Contact Form Handler
+**Location**: `supabase/functions/contact_submissions/index.ts`
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+Handles contact form submissions with:
+- Form validation
+- Database storage
+- Email marketing integration
+- Error handling
 
-<details>
-  <summary><b>macOS</b></summary>
+**Endpoint**: `https://your-project.supabase.co/functions/v1/contact_submissions`
 
-  Available via [Homebrew](https://brew.sh). To install:
+## 📱 Responsive Design
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+The application is fully responsive with:
+- Mobile-first approach
+- Tailwind CSS utility classes
+- Shadcn/ui component library
+- Optimized for all screen sizes
 
-  To install the beta release channel:
+## 🔍 SEO & Performance
+
+- **Meta Tags**: Comprehensive SEO meta tags
+- **Structured Data**: JSON-LD for rich snippets
+- **Sitemap**: Auto-generated sitemap
+- **Lazy Loading**: Component lazy loading
+- **Image Optimization**: WebP format, lazy loading
+- **Bundle Analysis**: Build size monitoring
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Support
+
+For support or questions:
+- Email: info@diaryofanofw.com
+- Website: https://diaryofanofw.com/connect
+
+---
+
+**Built with ❤️ for the OFW community**
   
   ```sh
   brew install supabase/tap/supabase-beta

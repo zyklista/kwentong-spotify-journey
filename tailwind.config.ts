@@ -32,6 +32,14 @@ export default {
 			'2xl': '1536px',
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+				heading: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+			},
+			fontSize: {
+				'display': ['4.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }],
+				'display-sm': ['3.5rem', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '800' }],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

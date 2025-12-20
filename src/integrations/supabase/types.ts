@@ -143,6 +143,9 @@ export type Database = {
           email: string
           feedback: string
           id: string
+          interview_experience: string | null
+          interview_favorite: string | null
+          interview_suggestions: string | null
           name: string | null
           rating: number
         }
@@ -151,6 +154,9 @@ export type Database = {
           email: string
           feedback: string
           id?: string
+          interview_experience?: string | null
+          interview_favorite?: string | null
+          interview_suggestions?: string | null
           name?: string | null
           rating: number
         }
@@ -159,6 +165,9 @@ export type Database = {
           email?: string
           feedback?: string
           id?: string
+          interview_experience?: string | null
+          interview_favorite?: string | null
+          interview_suggestions?: string | null
           name?: string | null
           rating?: number
         }

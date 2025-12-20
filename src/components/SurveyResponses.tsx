@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format } from "date-fns";
 
 interface SurveyResponse {
   id: string;
@@ -13,6 +12,9 @@ interface SurveyResponse {
   email: string;
   rating: number;
   feedback: string;
+  interview_experience: string | null;
+  interview_suggestions: string | null;
+  interview_favorite: string | null;
   created_at: string;
 }
 
@@ -86,7 +88,15 @@ const SurveyResponses = () => {
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy at h:mm a');
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
     } catch {
       return 'Unknown date';
     }
@@ -153,6 +163,42 @@ const SurveyResponses = () => {
                 <p className={`text-foreground leading-relaxed ${isMobile ? 'text-sm' : ''}`}>
                   {response.feedback}
                 </p>
+                
+                {/* Interview Experience */}
+                {response.interview_experience && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <h4 className={`font-medium text-foreground ${isMobile ? 'text-sm' : 'text-base'} mb-2`}>
+                      Interview Experience:
+                    </h4>
+                    <p className={`text-muted-foreground leading-relaxed ${isMobile ? 'text-sm' : ''}`}>
+                      {response.interview_experience}
+                    </p>
+                  </div>
+                )}
+
+                {/* Interview Suggestions */}
+                {response.interview_suggestions && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <h4 className={`font-medium text-foreground ${isMobile ? 'text-sm' : 'text-base'} mb-2`}>
+                      Suggestions for Improvement:
+                    </h4>
+                    <p className={`text-muted-foreground leading-relaxed ${isMobile ? 'text-sm' : ''}`}>
+                      {response.interview_suggestions}
+                    </p>
+                  </div>
+                )}
+
+                {/* Interview Favorite */}
+                {response.interview_favorite && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <h4 className={`font-medium text-foreground ${isMobile ? 'text-sm' : 'text-base'} mb-2`}>
+                      Favorite Part:
+                    </h4>
+                    <p className={`text-muted-foreground leading-relaxed ${isMobile ? 'text-sm' : ''}`}>
+                      {response.interview_favorite}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

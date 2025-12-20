@@ -115,75 +115,80 @@ if (!response.ok) {
     setIsVisible(false);
   };
   if (!isVisible) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in-0 p-4">
-      <div className={`relative w-full overflow-hidden rounded-2xl bg-card shadow-xl animate-in zoom-in-95 duration-300 ${isMobile ? 'max-w-sm' : 'max-w-4xl'}`}>
-        <div className={`${isMobile ? 'flex flex-col min-h-[600px]' : 'flex flex-col md:flex-row min-h-[500px]'}`}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in-0 p-4 safe-top safe-bottom">
+      <div className={`relative w-full overflow-hidden rounded-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-300 border border-gray-100 ${isMobile ? 'max-w-sm' : 'max-w-5xl'} max-h-[90vh] overflow-y-auto`}>
+        <div className={`${isMobile ? 'flex flex-col' : 'flex flex-row min-h-[550px]'}`}>
           {/* Left Side - E-book Cover */}
-          <div className={`bg-gradient-to-br from-primary to-accent flex items-center justify-center ${isMobile ? 'flex-none p-6' : 'flex-1 p-8'}`}>
+          <div className={`bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center ${isMobile ? 'flex-none p-8' : 'flex-1 p-12'}`}>
             <div className="text-center">
-              <div className={`mx-auto bg-primary/20 rounded-lg border-4 border-secondary flex flex-col items-center justify-center mb-4 ${isMobile ? 'w-48 h-60' : 'w-64 h-80'}`}>
-                <div className={`text-white font-bold mb-4 ${isMobile ? 'text-2xl' : 'text-4xl'}`}>OFW</div>
-                <div className={`border-4 border-secondary rounded-lg mb-4 ${isMobile ? 'p-2' : 'p-4'}`}>
-                  <div className={`text-secondary font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>REAL</div>
-                  <div className={`text-secondary font-bold ${isMobile ? 'text-lg' : 'text-2xl'}`}>TALK</div>
-                </div>
-                <div className={`text-white ${isMobile ? 'text-sm' : 'text-lg'}`}>E-BOOK</div>
-              </div>
-              <p className={`text-primary-foreground opacity-90 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                Your guide to OFW success stories
+              <img 
+                src="/ebook.png" 
+                alt="OFW Real Talk E-book" 
+                className={`mx-auto object-contain ${isMobile ? 'w-48 h-60' : 'w-72 h-96'}`}
+                style={{
+                  filter: 'drop-shadow(0 20px 25px rgba(0, 0, 0, 0.4)) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.3))',
+                  transform: 'perspective(1000px) rotateY(-5deg)',
+                }}
+                loading="lazy"
+                decoding="async"
+                width={isMobile ? "192" : "288"}
+                height={isMobile ? "240" : "384"}
+              />
+              <p className={`text-white font-medium mt-6 ${isMobile ? 'text-sm' : 'text-lg'}`}>
+                Your Ultimate Guide to OFW Success
               </p>
             </div>
           </div>
 
           {/* Right Side - Form */}
-          <div className={`relative ${isMobile ? 'flex-1 p-4' : 'flex-1 p-8'}`}>
-            <div className="absolute top-4 right-4 flex gap-2">
+          <div className={`relative bg-gradient-to-br from-white to-slate-50 ${isMobile ? 'flex-1 p-6' : 'flex-1 p-12'}`}>
+            <div className="absolute top-6 right-6 flex gap-2">
               
-              <Button variant="ghost" size="icon" onClick={handleClose} className="text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={handleClose} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full">
+                <X className="h-6 w-6" />
               </Button>
             </div>
 
             {!isSuccess ? <div className={`mx-auto ${isMobile ? 'max-w-full' : 'max-w-md'}`}>
-                <h2 className={`font-bold text-foreground mb-4 text-center ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                  Get this FREE E-book straight to your inbox!
+                <h2 className={`font-extrabold text-gray-900 mb-4 text-center leading-tight ${isMobile ? 'text-xl' : 'text-3xl lg:text-4xl'}`}>
+                  Get Your FREE E-book Now!
                 </h2>
-                <p className={`text-muted-foreground mb-6 text-center ${isMobile ? 'text-sm' : 'text-base'}`}>
-                  Discover real insights and practical advice for OFWs. No spam, just valuable content delivered directly to you.
+                <p className={`text-gray-600 mb-8 text-center leading-relaxed ${isMobile ? 'text-sm' : 'text-lg'}`}>
+                  Discover real insights and practical advice from successful OFWs. Delivered straight to your inbox—no spam, just value.
                 </p>
 
-                {showWebhookConfig && <div className="mb-4 p-4 bg-secondary/20 rounded-lg">
-                    <label className="text-sm font-medium mb-2 block">Make.com Webhook URL (Optional)</label>
+                {showWebhookConfig && <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <label className="text-sm font-bold mb-2 block text-gray-900">Make.com Webhook URL (Optional)</label>
                     <Input type="url" placeholder="https://hook.make.com/..." value={makeWebhookUrl} onChange={e => setMakeWebhookUrl(e.target.value)} className="text-sm" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Enter your Make.com webhook URL to trigger automation when someone signs up for the ebook.
+                    <p className="text-xs text-gray-600 mt-2">
+                      Enter your Make.com webhook URL to trigger automation when someone signs up.
                     </p>
                   </div>}
 
-                <form onSubmit={handleSubmit} className={`${isMobile ? 'space-y-3' : 'space-y-4'}`}>
+                <form onSubmit={handleSubmit} className={`${isMobile ? 'space-y-4' : 'space-y-5'}`}>
                   <div>
-                    <Input type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required className={`w-full ${isMobile ? 'h-10 text-sm' : ''}`} />
+                    <Input type="email" placeholder="Enter your email address *" value={email} onChange={e => setEmail(e.target.value)} required className={`w-full border-2 border-gray-200 rounded-xl focus:border-primary transition-all ${isMobile ? 'h-12 text-base px-4' : 'h-14 text-lg px-5'}`} />
                   </div>
                   <div>
-                    <Input type="text" placeholder="Enter your first name" value={name} onChange={e => setName(e.target.value)} className={`w-full ${isMobile ? 'h-10 text-sm' : ''}`} />
+                    <Input type="text" placeholder="Enter your first name *" value={name} onChange={e => setName(e.target.value)} required className={`w-full border-2 border-gray-200 rounded-xl focus:border-primary transition-all ${isMobile ? 'h-12 text-base px-4' : 'h-14 text-lg px-5'}`} />
                   </div>
-                  <Button type="submit" className={`w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold ${isMobile ? 'py-2 text-sm' : 'py-3'}`}>
-                    Send it to my Email
+                  <Button type="submit" className={`w-full bg-gradient-to-r from-primary via-accent to-primary hover:scale-[1.02] hover:shadow-xl transition-all duration-300 text-white font-bold rounded-xl uppercase tracking-wide ${isMobile ? 'py-4 text-base' : 'py-5 text-lg'}`}>
+                    Send to My Email
                   </Button>
                 </form>
 
-                <p className={`text-muted-foreground mt-4 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>
-                  We respect your privacy. Your email will only be used to send you the e-book and occasional valuable updates. You can unsubscribe anytime.
+                <p className={`text-gray-500 mt-6 text-center leading-relaxed ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                  🔒 We respect your privacy. Your email will only be used for the e-book and valuable updates. Unsubscribe anytime.
                 </p>
-              </div> : <div className={`mx-auto text-center ${isMobile ? 'max-w-full py-8' : 'max-w-md py-16'}`}>
-                <div className={`bg-success rounded-full flex items-center justify-center mx-auto mb-4 ${isMobile ? 'w-12 h-12' : 'w-16 h-16'}`}>
-                  <svg className={`text-success-foreground ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </div> : <div className={`mx-auto text-center flex flex-col items-center justify-center ${isMobile ? 'max-w-full py-12' : 'max-w-md py-20'}`}>
+                <div className={`bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg ${isMobile ? 'w-16 h-16' : 'w-20 h-20'}`}>
+                  <svg className={`text-white ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className={`font-bold text-foreground mb-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>Thank you!</h3>
-                <p className={`text-muted-foreground ${isMobile ? 'text-sm' : 'text-base'}`}>
-                  Your free e-book will be sent to your inbox shortly. Check your email for the download link.
+                <h3 className={`font-extrabold text-gray-900 mb-3 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>Thank You!</h3>
+                <p className={`text-gray-600 leading-relaxed ${isMobile ? 'text-base' : 'text-lg'}`}>
+                  Your free e-book is on its way! Check your inbox for the download link.
                 </p>
               </div>}
           </div>

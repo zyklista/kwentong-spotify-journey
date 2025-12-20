@@ -1,14 +1,17 @@
-const CACHE_NAME = 'diary-of-ofw-v1';
-const STATIC_CACHE = 'diary-of-ofw-static-v1';
-const DYNAMIC_CACHE = 'diary-of-ofw-dynamic-v1';
+const CACHE_NAME = 'diary-of-ofw-v2';
+const STATIC_CACHE = 'diary-of-ofw-static-v2';
+const DYNAMIC_CACHE = 'diary-of-ofw-dynamic-v2';
 
 // Resources to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
+  '/site.webmanifest',
   '/robots.txt',
   '/sitemap.xml',
+  '/ebook.png',
+  '/services.png',
+  '/lovable-uploads/0965794f-f490-4dee-8031-bbad64aaa5a1.png'
   // Cache critical CSS and JS will be added by Vite
 ];
 

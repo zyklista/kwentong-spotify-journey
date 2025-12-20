@@ -19,7 +19,11 @@ interface SurveyFormData {
   interviewFavorite: string;
 }
 
-const SurveyWidget = () => {
+interface SurveyWidgetProps {
+  onSuccess?: () => void;
+}
+
+const SurveyWidget = ({ onSuccess }: SurveyWidgetProps = {}) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [formData, setFormData] = useState<SurveyFormData>({
@@ -88,22 +92,84 @@ const SurveyWidget = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('survey_responses')
-        .insert([{
-          name: formData.name.trim() || null,
-          email: formData.email.trim(),
-          rating: formData.rating,
-          feedback: formData.feedback.trim(),
-          interview_experience: formData.interviewExperience.trim(),
-          interview_suggestions: formData.interviewSuggestions.trim(),
-          interview_favorite: formData.interviewFavorite.trim(),
-        }]);
+      // Log the data being sent for debugging
+      console.log('Sending survey data:', {
+        name: formData.name,
+        email: formData.email,
+        rating: formData.rating,
+        feedback: formData.feedback,
+        interviewExperience: formData.interviewExperience,
+        interviewSuggestions: formData.interviewSuggestions,
+        interviewFavorite: formData.interviewFavorite,
+      });
 
-      if (error) {
-        throw error;
+      // Try the Survey Edge Function first, fallback to direct database insertion
+      let data;
+      let response;
+
+      try {
+        // Call the Survey Edge Function for database + Brevo integration
+        const supabaseUrl = "https://yvmqcqrewqvwroxinzvn.supabase.co";
+        const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFjcXJld3F2d3JveGluenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMzQxMDEsImV4cCI6MjA3MjgxMDEwMX0.R0dPQK8ELH3OXmwxbJaEMa2CIU4E6G0hWEwj-sKK9Vc";
+
+        response = await fetch(`${supabaseUrl}/functions/v1/survey-submissions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            name: formData.name.trim() || null,
+            email: formData.email.trim(),
+            rating: formData.rating,
+            feedback: formData.feedback.trim(),
+            interviewExperience: formData.interviewExperience.trim() || null,
+            interviewSuggestions: formData.interviewSuggestions.trim() || null,
+            interviewFavorite: formData.interviewFavorite.trim() || null,
+          }),
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          console.warn('Edge function failed, falling back to direct database insertion:', data);
+          throw new Error('Edge function not available');
+        }
+
+        if (!data.success) {
+          console.warn('Edge function returned error, falling back to direct database insertion:', data);
+          throw new Error('Edge function error');
+        }
+
+        console.log('Survey submitted via edge function:', data);
+
+      } catch (edgeFunctionError) {
+        console.log('Edge function not available, using direct database insertion');
+
+        // Fallback: Submit directly to Supabase
+        const { data: dbData, error: dbError } = await supabase
+          .from('survey_responses')
+          .insert({
+            name: formData.name.trim() || null,
+            email: formData.email.trim(),
+            rating: formData.rating,
+            feedback: formData.feedback.trim(),
+            interview_experience: formData.interviewExperience.trim() || null,
+            interview_suggestions: formData.interviewSuggestions.trim() || null,
+            interview_favorite: formData.interviewFavorite.trim() || null,
+          });
+
+        if (dbError) {
+          console.error('Direct database insertion error:', dbError);
+          throw new Error(dbError.message || 'Failed to submit survey');
+        }
+
+        console.log('Survey submitted directly to database:', dbData);
+        console.warn('⚠️ Brevo integration not available - deploy edge function for full functionality');
+        data = { success: true, databaseSaved: true, brevoAdded: false, emailSent: false };
       }
 
+      // Success
       setIsSuccess(true);
       toast({
         title: "Survey Submitted!",
@@ -112,19 +178,24 @@ const SurveyWidget = () => {
 
       // Reset form
       setFormData({
-    name: "",
-    email: "",
-    rating: 0,
-    feedback: "",
-    interviewExperience: "",
-    interviewSuggestions: "",
-    interviewFavorite: "",
+        name: "",
+        email: "",
+        rating: 0,
+        feedback: "",
+        interviewExperience: "",
+        interviewSuggestions: "",
+        interviewFavorite: "",
       });
+
+      // Call onSuccess callback (e.g., to close modal)
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       console.error('Survey submission error:', error);
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your survey. Please try again.",
+        description: error.message || "There was an error submitting your survey. Please try again.",
         variant: "destructive",
       });
     } finally {

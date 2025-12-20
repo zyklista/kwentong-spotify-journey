@@ -3,8 +3,8 @@ import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin, Heart } fro
 import { FaTiktok } from "react-icons/fa";
 const Footer = () => {
   return (
-  <footer className="bg-gradient-to-b from-background/20 to-secondary/5 border-t border-border">
-  <div className="container mx-auto px-4 py-3">
+  <footer className="bg-gradient-to-b from-background/20 to-secondary/5 border-t border-border safe-bottom">
+  <div className="container mx-auto px-4 py-3 pb-8">
         {/* Main Footer Content */}
         <div className="text-center mb-8">
           {/* ...existing code... */}
