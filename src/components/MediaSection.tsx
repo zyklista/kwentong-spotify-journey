@@ -492,8 +492,6 @@ const MediaSection = () => {
               className="rounded-lg sm:rounded-xl shadow-lg sm:shadow-xl w-full h-48 sm:h-64 lg:h-96 object-cover object-center border border-gray-200 bg-white"
               loading="lazy"
               decoding="async"
-              width="1200"
-              height="384"
             />
           </div>
           <div className="mb-8 sm:mb-12 text-center mt-6 sm:mt-10 px-2">
@@ -520,8 +518,6 @@ const MediaSection = () => {
                           className="w-full h-40 sm:h-48 lg:h-52 object-cover rounded-lg block"
                           loading="lazy"
                           decoding="async"
-                          width="480"
-                          height="360"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center p-2 sm:p-3 rounded-full bg-white/90 group-hover:scale-110 group-hover:animate-pulse">

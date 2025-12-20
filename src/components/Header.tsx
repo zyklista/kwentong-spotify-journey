@@ -25,8 +25,6 @@ const Header = () => {
                 className="w-full h-full object-cover"
                 loading="eager"
                 decoding="async"
-                width="48"
-                height="48"
               />
             </div>
             <div className="min-w-0">
