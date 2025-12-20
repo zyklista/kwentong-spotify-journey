@@ -131,8 +131,6 @@ if (!response.ok) {
                 }}
                 loading="lazy"
                 decoding="async"
-                width={isMobile ? "192" : "288"}
-                height={isMobile ? "240" : "384"}
               />
               <p className={`text-white font-medium mt-6 ${isMobile ? 'text-sm' : 'text-lg'}`}>
                 Your Ultimate Guide to OFW Success
